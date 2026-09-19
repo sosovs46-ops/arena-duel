@@ -2,17 +2,17 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Public game results can be created by the Mini App.
+    // Temporary public write rule for game results.
+    // Before production, replace this with authenticated Telegram/Firebase users.
     match /journal/{entryId} {
       allow create: if request.resource.data.keys().hasAll([
-        'student', 'opponent', 'subject', 'difficulty', 'score', 'createdAt'
+        'student', 'subject', 'class', 'result', 'timestamp'
       ]);
       allow read: if false;
       allow update, delete: if false;
     }
 
-    // Teacher accounts must not be stored with plaintext PINs in a public client.
-    // Keep teacher authentication server-side or use Firebase Authentication.
+    // Teacher accounts must not store plaintext PINs in a public client.
     match /teachers/{teacherId} {
       allow read, write: if false;
     }

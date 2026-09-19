@@ -1,1398 +1,865 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Арена: Дуэль</title>
-<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Special+Elite&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-font-family:'Special Elite',serif;
-background-color:#d4b896;
-background-image:
-  repeating-linear-gradient(0deg, rgba(139,90,43,0.04) 0px, rgba(139,90,43,0.04) 1px, transparent 1px, transparent 3px),
-  repeating-linear-gradient(90deg, rgba(139,90,43,0.04) 0px, rgba(139,90,43,0.04) 1px, transparent 1px, transparent 3px),
-  radial-gradient(ellipse at center, #e8d4a8 0%, #c9a876 100%);
-min-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-padding:20px;
-position:relative;
-}
-body::before{
-content:'';
-position:fixed;
-top:0;left:0;right:0;bottom:0;
-background-image:
-  radial-gradient(circle at 20% 30%, rgba(0,0,0,0.15) 0%, transparent 40%),
-  radial-gradient(circle at 80% 70%, rgba(0,0,0,0.15) 0%, transparent 40%);
-pointer-events:none;
-z-index:1;
-}
-.container{
-background:linear-gradient(135deg, #f4e4bc 0%, #e8d4a8 50%, #d4b896 100%);
-border:6px solid #2b1810;
-border-radius:15px;
-padding:40px;
-max-width:900px;
-width:100%;
-box-shadow:
-  0 0 0 3px #8b5a2b,
-  0 0 0 8px #2b1810,
-  0 20px 60px rgba(0,0,0,0.5),
-  inset 0 0 40px rgba(139,90,43,0.2);
-position:relative;
-z-index:2;
-}
-.container::before{
-content:'';
-position:absolute;
-top:10px;left:10px;right:10px;bottom:10px;
-border:2px dashed rgba(43,24,16,0.3);
-border-radius:10px;
-pointer-events:none;
-}
-.screen{display:none}
-.screen.active{display:block;animation:fadeIn 0.5s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
-@keyframes popIn{0%{transform:scale(0.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Арена: Дуэль</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="./firebase-config.js"></script>
+  <style>
+    :root {
+      --bg-1: #d4b896;
+      --bg-2: #e8d4a8;
+      --bg-3: #c9a876;
+      --panel: #f4e4bc;
+      --brown: #2b1810;
+      --wood: #8b5a2b;
+      --red: #8b0000;
+      --gold: #ffd700;
+    }
 
-h1{
-font-family:'Creepster',cursive;
-text-align:center;
-color:#2b1810;
-margin-bottom:10px;
-font-size:2.5em;
-text-shadow:3px 3px 0 #8b5a2b;
-letter-spacing:3px;
-}
-h2{
-font-family:'Creepster',cursive;
-text-align:center;
-color:#8b0000;
-margin-bottom:30px;
-font-size:2.2em;
-text-shadow:2px 2px 0 #2b1810;
-letter-spacing:3px;
-}
-.subtitle{
-text-align:center;
-color:#2b1810;
-margin-bottom:30px;
-font-size:1.3em;
-font-family:'Special Elite',serif;
-font-style:italic;
-letter-spacing:2px;
-}
-.role-selector{display:flex;gap:20px;margin-bottom:30px}
-.role-btn{
-flex:1;
-padding:30px;
-border:4px solid #2b1810;
-border-radius:10px;
-background:linear-gradient(135deg, #f4e4bc 0%, #e8d4a8 100%);
-cursor:pointer;
-transition:all 0.3s;
-text-align:center;
-font-family:'Creepster',cursive;
-font-size:1.6em;
-color:#2b1810;
-box-shadow:4px 4px 0 #2b1810;
-letter-spacing:3px;
-}
-.role-btn:hover{
-background:linear-gradient(135deg, #8b0000 0%, #5c0000 100%);
-color:#f4e4bc;
-transform:translate(-2px,-2px);
-box-shadow:6px 6px 0 #2b1810;
-}
-.form-group{margin-bottom:20px}
-label{
-display:block;
-margin-bottom:8px;
-color:#2b1810;
-font-weight:600;
-font-size:1.1em;
-font-family:'Special Elite',serif;
-letter-spacing:1px;
-}
-input,select{
-width:100%;
-padding:12px;
-border:3px solid #2b1810;
-border-radius:5px;
-font-size:1em;
-font-family:'Special Elite',serif;
-background:#f4e4bc;
-color:#2b1810;
-transition:all 0.3s;
-}
-input:focus,select:focus{
-outline:none;
-border-color:#8b0000;
-box-shadow:0 0 0 3px rgba(139,0,0,0.3);
-}
-.btn{
-width:100%;
-padding:15px;
-border:3px solid #2b1810;
-border-radius:5px;
-font-size:1.1em;
-cursor:pointer;
-transition:all 0.3s;
-margin-top:10px;
-font-family:'Creepster',cursive;
-letter-spacing:2px;
-box-shadow:3px 3px 0 #2b1810;
-}
-.btn-primary{
-background:linear-gradient(135deg, #8b0000 0%, #5c0000 100%);
-color:#f4e4bc;
-}
-.btn-primary:hover{
-transform:translate(-2px,-2px);
-box-shadow:5px 5px 0 #2b1810;
-}
-.btn-secondary{
-background:linear-gradient(135deg, #e8d4a8 0%, #c9a876 100%);
-color:#2b1810;
-}
-.btn-secondary:hover{
-transform:translate(-2px,-2px);
-box-shadow:5px 5px 0 #2b1810;
-}
-.mode-selector{display:flex;flex-direction:column;gap:15px}
-.mode-btn{
-padding:25px;
-border:4px solid #2b1810;
-border-radius:10px;
-background:linear-gradient(135deg, #f4e4bc 0%, #e8d4a8 100%);
-cursor:pointer;
-transition:all 0.3s;
-text-align:left;
-box-shadow:4px 4px 0 #2b1810;
-}
-.mode-btn:hover{
-background:linear-gradient(135deg, #fff4d4 0%, #f4e4bc 100%);
-transform:translate(-2px,-2px);
-box-shadow:6px 6px 0 #2b1810;
-}
-.mode-title{
-font-family:'Creepster',cursive;
-font-size:1.6em;
-color:#8b0000;
-margin-bottom:5px;
-letter-spacing:2px;
-}
-.mode-desc{color:#2b1810;font-size:0.95em;font-family:'Special Elite',serif}
-.difficulty-selector{display:flex;flex-direction:column;gap:15px}
-.difficulty-btn{
-padding:20px;
-border:4px solid;
-border-radius:10px;
-background:linear-gradient(135deg, #f4e4bc 0%, #e8d4a8 100%);
-cursor:pointer;
-transition:all 0.3s;
-text-align:left;
-box-shadow:4px 4px 0;
-}
-.difficulty-btn.easy{border-color:#2d5016;color:#2d5016;box-shadow:4px 4px 0 #2d5016}
-.difficulty-btn.hard{border-color:#b8860b;color:#b8860b;box-shadow:4px 4px 0 #b8860b}
-.difficulty-btn.impossible{border-color:#8b0000;color:#8b0000;box-shadow:4px 4px 0 #8b0000}
-.difficulty-btn:hover{transform:translate(-2px,-2px)}
-.difficulty-title{
-font-family:'Creepster',cursive;
-font-size:1.5em;
-margin-bottom:5px;
-letter-spacing:2px;
-}
-.game-screen{display:flex;flex-direction:column;gap:20px}
-.score-board{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:20px;
-background:linear-gradient(135deg, #2b1810 0%, #5c3a28 100%);
-border:4px solid #2b1810;
-border-radius:10px;
-color:#f4e4bc;
-box-shadow:4px 4px 0 #8b5a2b;
-}
-.player-score{text-align:center;flex:1}
-.player-name{
-font-family:'Creepster',cursive;
-font-size:1.3em;
-margin-bottom:5px;
-color:#f4e4bc;
-letter-spacing:2px;
-word-break:break-word;
-}
-.score{
-font-family:'Creepster',cursive;
-font-size:2.5em;
-color:#ffd700;
-text-shadow:2px 2px 0 #2b1810;
-}
-.vs{
-font-family:'Creepster',cursive;
-font-size:2em;
-color:#8b0000;
-padding:0 20px;
-text-shadow:2px 2px 0 #2b1810;
-}
-.timer{
-text-align:center;
-font-family:'Creepster',cursive;
-font-size:2em;
-color:#8b0000;
-padding:15px;
-background:linear-gradient(135deg, #f4e4bc 0%, #e8d4a8 100%);
-border:4px solid #2b1810;
-border-radius:10px;
-box-shadow:4px 4px 0 #2b1810;
-letter-spacing:3px;
-}
-.question-container{
-background:linear-gradient(135deg, #fff8e7 0%, #f4e4bc 100%);
-padding:30px;
-border-radius:10px;
-min-height:150px;
-display:flex;
-align-items:center;
-justify-content:center;
-border:4px solid #2b1810;
-box-shadow:4px 4px 0 #8b5a2b,inset 0 0 20px rgba(139,90,43,0.1);
-}
-.question{
-font-size:1.4em;
-text-align:center;
-color:#2b1810;
-line-height:1.6;
-width:100%;
-font-family:'Special Elite',serif;
-}
-.round-info{
-text-align:center;
-font-family:'Special Elite',serif;
-font-size:1.1em;
-color:#2b1810;
-padding:10px;
-background:linear-gradient(135deg, #e8d4a8 0%, #c9a876 100%);
-border:3px solid #2b1810;
-border-radius:5px;
-letter-spacing:1px;
-}
-.result-screen{text-align:center}
-.winner{
-font-family:'Creepster',cursive;
-font-size:2em;
-color:#8b0000;
-margin:30px 0;
-text-shadow:3px 3px 0 #2b1810;
-letter-spacing:2px;
-}
-.final-score{
-font-size:1.3em;
-color:#2b1810;
-margin-bottom:30px;
-font-family:'Special Elite',serif;
-}
-.teacher-journal{display:flex;flex-direction:column;gap:20px}
-.settings{display:flex;gap:10px;flex-wrap:wrap}
-.settings select{flex:1;min-width:150px}
-.journal-entries{
-max-height:400px;
-overflow-y:auto;
-border:4px solid #2b1810;
-border-radius:10px;
-padding:15px;
-background:linear-gradient(135deg, #fff8e7 0%, #f4e4bc 100%);
-box-shadow:inset 0 0 20px rgba(139,90,43,0.2);
-}
-.journal-entry{
-padding:15px;
-border-bottom:2px dashed #8b5a2b;
-background:rgba(244,228,188,0.5);
-margin-bottom:10px;
-border-radius:5px;
-border-left:4px solid #8b0000;
-}
-.journal-entry:last-child{border-bottom:none}
-.entry-header{
-display:flex;
-justify-content:space-between;
-margin-bottom:10px;
-font-weight:bold;
-color:#8b0000;
-flex-wrap:wrap;
-gap:8px;
-font-family:'Creepster',cursive;
-letter-spacing:1px;
-}
-.entry-details{color:#2b1810;font-size:0.95em;line-height:1.6;font-family:'Special Elite',serif}
-.search-box{
-width:100%;
-padding:12px;
-border:3px solid #2b1810;
-border-radius:5px;
-font-size:1em;
-margin-bottom:15px;
-font-family:'Special Elite',serif;
-background:#f4e4bc;
-color:#2b1810;
-}
-.search-box:focus{outline:none;border-color:#8b0000;box-shadow:0 0 0 3px rgba(139,0,0,0.3)}
-.btn-group{display:flex;gap:10px;flex-wrap:wrap}
-.btn-group .btn{flex:1;min-width:140px}
-.teacher-info{
-background:linear-gradient(135deg, #fff8e7 0%, #f4e4bc 100%);
-padding:15px;
-border-radius:10px;
-margin-bottom:15px;
-text-align:center;
-border:3px solid #2b1810;
-border-left:8px solid #8b0000;
-box-shadow:3px 3px 0 #2b1810;
-}
-.teacher-info strong{color:#8b0000;font-family:'Creepster',cursive;font-size:1.4em;letter-spacing:2px}
-.subject-badge{
-display:inline-block;
-background:#8b0000;
-color:#f4e4bc;
-padding:4px 12px;
-border-radius:3px;
-font-size:0.85em;
-margin-left:8px;
-border:2px solid #2b1810;
-font-family:'Special Elite',serif;
-}
-.difficulty-badge{
-display:inline-block;
-padding:4px 12px;
-border-radius:3px;
-font-size:0.85em;
-color:#f4e4bc;
-margin-left:8px;
-border:2px solid #2b1810;
-}
-.difficulty-badge.easy{background:#2d5016}
-.difficulty-badge.hard{background:#b8860b}
-.difficulty-badge.impossible{background:#8b0000}
-.empty-journal{
-text-align:center;
-color:#8b5a2b;
-padding:40px 20px;
-font-style:italic;
-font-family:'Special Elite',serif;
-}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background:
+        repeating-linear-gradient(0deg, rgba(139,90,43,.04), rgba(139,90,43,.04) 1px, transparent 1px, transparent 3px),
+        repeating-linear-gradient(90deg, rgba(139,90,43,.04), rgba(139,90,43,.04) 1px, transparent 1px, transparent 3px),
+        radial-gradient(circle at center, var(--bg-2) 0%, var(--bg-3) 100%);
+      color: var(--brown);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
 
-.options-grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
-margin-top:15px;
-}
-.option-btn{
-padding:18px 15px;
-border:3px solid #2b1810;
-border-radius:8px;
-background:linear-gradient(135deg, #fff8e7 0%, #f4e4bc 100%);
-color:#2b1810;
-font-family:'Special Elite',serif;
-font-size:1.05em;
-cursor:pointer;
-transition:all 0.2s;
-box-shadow:3px 3px 0 #2b1810;
-text-align:left;
-line-height:1.4;
-}
-.option-btn:hover{
-background:linear-gradient(135deg, #ffd700 0%, #e8b800 100%);
-transform:translate(-2px,-2px);
-box-shadow:5px 5px 0 #2b1810;
-}
-.option-btn .opt-letter{
-font-family:'Creepster',cursive;
-font-weight:bold;
-color:#8b0000;
-font-size:1.3em;
-margin-right:10px;
-}
-.option-btn.correct{
-background:linear-gradient(135deg, #4caf50 0%, #2d5016 100%)!important;
-color:#fff!important;
-animation:popIn 0.3s ease;
-}
-.option-btn.correct .opt-letter{color:#ffd700}
-.option-btn.wrong{
-background:linear-gradient(135deg, #8b0000 0%, #5c0000 100%)!important;
-color:#f4e4bc!important;
-animation:shake 0.4s ease;
-}
-.option-btn.wrong .opt-letter{color:#ffd700}
-.option-btn:disabled{cursor:not-allowed;opacity:0.85}
+    .container {
+      width: min(900px, 100%);
+      background: linear-gradient(135deg, #f4e4bc 0%, #e8d4a8 50%, #d4b896 100%);
+      border: 6px solid var(--brown);
+      border-radius: 16px;
+      box-shadow: 0 0 0 3px var(--wood), 0 0 0 8px var(--brown), 0 20px 60px rgba(0,0,0,.45);
+      padding: 28px;
+      position: relative;
+    }
 
-.feedback{
-text-align:center;
-font-family:'Creepster',cursive;
-font-size:1.5em;
-padding:15px;
-margin-top:10px;
-border-radius:8px;
-border:3px solid #2b1810;
-letter-spacing:2px;
-animation:popIn 0.3s ease;
-}
-.feedback.wrong{
-background:linear-gradient(135deg, #8b0000 0%, #5c0000 100%);
-color:#ffd700;
-box-shadow:4px 4px 0 #2b1810;
-}
-.feedback.correct{
-background:linear-gradient(135deg, #2d5016 0%, #4caf50 100%);
-color:#fff;
-box-shadow:4px 4px 0 #2b1810;
-}
-.feedback.draw{
-background:linear-gradient(135deg, #b8860b 0%, #8b5a2b 100%);
-color:#fff;
-box-shadow:4px 4px 0 #2b1810;
-}
+    .container::before {
+      content: '';
+      position: absolute;
+      inset: 10px;
+      border: 2px dashed rgba(43,24,16,.35);
+      border-radius: 10px;
+      pointer-events: none;
+    }
 
-.turn-indicator{
-text-align:center;
-font-family:'Creepster',cursive;
-font-size:1.4em;
-color:#8b0000;
-padding:10px;
-background:linear-gradient(135deg, #fff8e7 0%, #f4e4bc 100%);
-border:3px solid #2b1810;
-border-radius:8px;
-letter-spacing:2px;
-margin-bottom:10px;
-box-shadow:3px 3px 0 #2b1810;
-}
+    .screen { display: none; }
+    .screen.active { display: block; }
 
-.container::after{
-content:'★ ✦ ★';
-position:absolute;
-top:-15px;left:50%;
-transform:translateX(-50%);
-background:#d4b896;
-padding:0 15px;
-color:#8b0000;
-font-size:1.5em;
-letter-spacing:10px;
-}
-@media(max-width:768px){
-.role-selector{flex-direction:column}
-h1{font-size:1.6em}
-.container{padding:20px}
-.winner{font-size:1.5em}
-.btn-group{flex-direction:column}
-.btn-group .btn{min-width:100%}
-.options-grid{grid-template-columns:1fr}
-}
-</style>
+    h1, h2, .btn, .title-fancy {
+      font-family: Georgia, 'Times New Roman', serif;
+      letter-spacing: 1px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 14px;
+      color: var(--brown);
+    }
+
+    h2 {
+      text-align: center;
+      color: var(--red);
+      font-size: clamp(1.5rem, 3vw, 2.3rem);
+      margin-bottom: 24px;
+    }
+
+    .subtitle {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+      color: var(--brown);
+      opacity: 0.9;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.15);
+      border: 3px solid var(--brown);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .role-selector, .mode-selector, .difficulty-selector {
+      display: grid;
+      gap: 16px;
+    }
+
+    .role-selector { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .role-btn, .mode-btn, .difficulty-btn, .btn, .option-btn {
+      border: 3px solid var(--brown);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+      font-size: 1rem;
+    }
+
+    .role-btn, .mode-btn, .difficulty-btn {
+      background: linear-gradient(135deg, #f9f1d4 0%, #e9d6a5 100%);
+      color: var(--brown);
+      padding: 22px 18px;
+      box-shadow: 4px 4px 0 var(--brown);
+      min-height: 90px;
+    }
+
+    .role-btn:hover, .mode-btn:hover, .difficulty-btn:hover, .btn:hover, .option-btn:hover {
+      transform: translate(-2px, -2px);
+    }
+
+    .mode-title, .difficulty-title {
+      font-size: 1.35rem;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    .mode-desc { font-size: 0.9rem; }
+
+    .difficulty-btn.easy { border-color: #2d5016; box-shadow: 4px 4px 0 #2d5016; }
+    .difficulty-btn.hard { border-color: #b8860b; box-shadow: 4px 4px 0 #b8860b; }
+    .difficulty-btn.impossible { border-color: #8b0000; box-shadow: 4px 4px 0 #8b0000; }
+
+    .form-group { margin-bottom: 18px; }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 3px solid var(--brown);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--brown);
+      font-size: 1rem;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, var(--red) 0%, #5a0505 100%);
+      color: white;
+      box-shadow: 4px 4px 0 var(--brown);
+      margin-top: 10px;
+    }
+
+    .btn.secondary {
+      background: linear-gradient(135deg, #eed8a6 0%, #d8b777 100%);
+      color: var(--brown);
+    }
+
+    .scoreboard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, #2b1810 0%, #5b3828 100%);
+      border: 4px solid var(--brown);
+      border-radius: 12px;
+      padding: 16px 18px;
+      color: white;
+      margin-bottom: 18px;
+    }
+
+    .player-score {
+      text-align: center;
+      flex: 1;
+    }
+
+    .player-name {
+      font-size: 1.1rem;
+      color: #f4e4bc;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    .score {
+      font-size: 2.2rem;
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    .vs {
+      font-size: 1.8rem;
+      color: var(--red);
+      padding: 0 10px;
+      font-weight: 700;
+    }
+
+    .timer {
+      text-align: center;
+      font-size: 2rem;
+      margin: 16px 0;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    .question-box {
+      border: 4px solid var(--brown);
+      background: linear-gradient(135deg, #fffaf0 0%, #f4e4bc 100%);
+      border-radius: 12px;
+      padding: 20px;
+      min-height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin-bottom: 18px;
+      font-size: clamp(1.1rem, 2vw, 1.4rem);
+      line-height: 1.6;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .option-btn {
+      background: linear-gradient(135deg, #fff8e7 0%, #f4e4bc 100%);
+      color: var(--brown);
+      padding: 16px 12px;
+      text-align: left;
+      box-shadow: 3px 3px 0 var(--brown);
+    }
+
+    .option-btn.correct { background: linear-gradient(135deg, #3e8f40, #2d5016); color: white; }
+    .option-btn.wrong { background: linear-gradient(135deg, #9e1f1f, #5c0000); color: white; }
+    .option-btn:disabled { opacity: 0.9; }
+
+    .feedback {
+      display: none;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      padding: 14px;
+      border-radius: 10px;
+      border: 3px solid var(--brown);
+    }
+
+    .feedback.correct { display: block; background: linear-gradient(135deg, #3e8f40, #2d5016); color: white; }
+    .feedback.wrong { display: block; background: linear-gradient(135deg, #9e1f1f, #5c0000); color: white; }
+
+    .cloud-status {
+      position: fixed;
+      right: 14px;
+      top: 12px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      border: 2px solid var(--brown);
+      box-shadow: 2px 2px 0 var(--brown);
+      background: #b8860b;
+      color: white;
+      z-index: 10;
+    }
+    .cloud-status.ok { background: #2d5016; }
+    .cloud-status.err { background: #8b0000; }
+
+    .teacher-info {
+      margin-bottom: 18px;
+      background: #fffaf0;
+      border: 3px solid var(--brown);
+      border-left: 8px solid var(--red);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .journal-list {
+      max-height: 360px;
+      overflow-y: auto;
+      border: 3px solid var(--brown);
+      border-radius: 10px;
+      background: #fffaf0;
+      padding: 14px;
+    }
+
+    .journal-entry {
+      background: rgba(244,228,188,0.5);
+      border-left: 4px solid var(--red);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #6d4d2d;
+      padding: 24px 10px;
+      font-style: italic;
+    }
+
+    @media (max-width: 700px) {
+      .role-selector, .options-grid { grid-template-columns: 1fr; }
+      .container { padding: 20px; }
+      .scoreboard { gap: 10px; }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
+  <div id="cloudStatus" class="cloud-status">⏳ Подключение...</div>
 
-<div id="mainScreen" class="screen active">
-<h1>⚔️ АРЕНА: ДУЭЛЬ ⚔️</h1>
-<p class="subtitle">~ Докажи, что ты лучший! ~</p>
-<div class="role-selector">
-<button class="role-btn" onclick="showScreen('studentRegister')">👨‍🎓 УЧЕНИК</button>
-<button class="role-btn" onclick="showScreen('teacherLogin')">👩‍🏫 УЧИТЕЛЬ</button>
-</div>
-</div>
+  <div class="container">
+    <div id="mainScreen" class="screen active">
+      <h1>���️ АРЕНА: ДУЭЛЬ ⚔️</h1>
+      <p class="subtitle">~ Викторина для школы, уроков и Telegram Mini App ~</p>
+      <div class="role-selector">
+        <button class="role-btn" onclick="showScreen('studentScreen')">👨‍🎓 Ученик</button>
+        <button class="role-btn" onclick="showScreen('teacherScreen')">👩‍🏫 Учитель</button>
+      </div>
+    </div>
 
-<div id="studentRegister" class="screen">
-<h2>📝 РЕГИСТРАЦИЯ</h2>
-<div class="form-group">
-<label>✎ Введите своё имя и фамилию</label>
-<input type="text" id="studentName" placeholder="Иван Иванов">
-</div>
-<div class="form-group">
-<label>✎ Введите ваш класс</label>
-<input type="text" id="studentClass" placeholder="Например: 7А">
-</div>
-<button class="btn btn-primary" onclick="registerStudent()">ДАЛЕЕ ➤</button>
-<button class="btn btn-secondary" onclick="showScreen('mainScreen')">◄ НАЗАД</button>
-</div>
+    <div id="studentScreen" class="screen">
+      <h2>Регистрация ученика</h2>
+      <div class="panel">
+        <div class="form-group">
+          <label>Имя и фамилия</label>
+          <input id="studentName" type="text" placeholder="Например: Иван Петров" />
+        </div>
+        <div class="form-group">
+          <label>Класс</label>
+          <input id="studentClass" type="text" placeholder="Например: 7А" />
+        </div>
+        <button class="btn" onclick="goToMode()">Далее</button>
+        <button class="btn secondary" onclick="showScreen('mainScreen')">Назад</button>
+      </div>
+    </div>
 
-<div id="modeSelect" class="screen">
-<h2>ВЫБЕРИ РЕЖИМ</h2>
-<div class="mode-selector">
-<button class="mode-btn" onclick="showScreen('subjectSelect')">
-<div class="mode-title">🤖 ПРОТИВ БОТА</div>
-<div class="mode-desc">~ Один на один с ИИ-соперником ~</div>
-</button>
-<button class="mode-btn" onclick="showScreen('player2Register')">
-<div class="mode-title">👥 2 ИГРОКА</div>
-<div class="mode-desc">~ Дуэль на одном устройстве (10 раундов) ~</div>
-</button>
-</div>
-<button class="btn btn-secondary" onclick="showScreen('mainScreen')">◄ НАЗАД</button>
-</div>
+    <div id="modeScreen" class="screen">
+      <h2>Выбери режим</h2>
+      <div class="mode-selector">
+        <button class="mode-btn" onclick="showScreen('subjectScreen')">
+          <div class="mode-title">🤖 Против бота</div>
+          <div class="mode-desc">Одиночная дуэль с компьютером</div>
+        </button>
+        <button class="mode-btn" onclick="showScreen('duelScreen')">
+          <div class="mode-title">👥 2 игрока</div>
+          <div class="mode-desc">Дуэль на одном устройстве</div>
+        </button>
+      </div>
+      <button class="btn secondary" onclick="showScreen('studentScreen')">Назад</button>
+    </div>
 
-<div id="subjectSelect" class="screen">
-<h2>📚 ВЫБЕРИ ПРЕДМЕТ</h2>
-<div class="form-group">
-<select id="subjectSelectBox">
-<option value="math">📐 Математика</option>
-<option value="russian">📖 Русский язык</option>
-<option value="literature">📚 Литература</option>
-<option value="history">🏛️ История</option>
-<option value="biology">🧬 Биология</option>
-<option value="geography">🌍 География</option>
-<option value="physics">⚛️ Физика</option>
-<option value="chemistry">🧪 Химия</option>
-<option value="english">🇬🇧 Английский язык</option>
-</select>
-</div>
-<button class="btn btn-primary" onclick="selectSubject()">ДАЛЕЕ ➤</button>
-<button class="btn btn-secondary" onclick="showScreen('modeSelect')">◄ НАЗАД</button>
-</div>
+    <div id="subjectScreen" class="screen">
+      <h2>Выбери предмет</h2>
+      <div class="panel">
+        <div class="form-group">
+          <label>Предмет</label>
+          <select id="subjectSelect">
+            <option value="math">Математика</option>
+            <option value="russian">Русский язык</option>
+            <option value="literature">Литература</option>
+            <option value="history">История</option>
+            <option value="biology">Биология</option>
+            <option value="geography">География</option>
+            <option value="physics">Физика</option>
+            <option value="chemistry">Химия</option>
+            <option value="english">Английский язык</option>
+          </select>
+        </div>
+        <button class="btn" onclick="showScreen('difficultyScreen')">Далее</button>
+        <button class="btn secondary" onclick="showScreen('modeScreen')">Назад</button>
+      </div>
+    </div>
 
-<div id="difficultySelect" class="screen">
-<h2>СЛОЖНОСТЬ БОТА</h2>
-<div class="difficulty-selector">
-<button class="difficulty-btn easy" onclick="startGame('bot','easy')">
-<div class="difficulty-title">🟢 ЛЕГКО</div>
-<div class="mode-desc">~ Бот отвечает медленно, вопросы лёгкие ~</div>
-</button>
-<button class="difficulty-btn hard" onclick="startGame('bot','hard')">
-<div class="difficulty-title">🟠 ТРУДНО</div>
-<div class="mode-desc">~ Бот справляется быстрее, вопросы сложнее ~</div>
-</button>
-<button class="difficulty-btn impossible" onclick="startGame('bot','impossible')">
-<div class="difficulty-title">🔴 НЕВОЗМОЖНО</div>
-<div class="mode-desc">~ Отвечает ещё быстрее, вопросы для гениев ~</div>
-</button>
-</div>
-<button class="btn btn-secondary" onclick="showScreen('subjectSelect')">◄ НАЗАД</button>
-</div>
+    <div id="difficultyScreen" class="screen">
+      <h2>Сложность</h2>
+      <div class="difficulty-selector">
+        <button class="difficulty-btn easy" onclick="startBotGame('easy')">
+          <div class="difficulty-title">🟢 Легко</div>
+          <div class="mode-desc">Бот прост, вопросы проще</div>
+        </button>
+        <button class="difficulty-btn hard" onclick="startBotGame('hard')">
+          <div class="difficulty-title">🟠 Сложно</div>
+          <div class="mode-desc">Бот быстрее и точнее</div>
+        </button>
+        <button class="difficulty-btn impossible" onclick="startBotGame('impossible')">
+          <div class="difficulty-title">🔴 Невозможно</div>
+          <div class="mode-desc">Максимально сложный режим</div>
+        </button>
+      </div>
+      <button class="btn secondary" onclick="showScreen('subjectScreen')">Назад</button>
+    </div>
 
-<div id="player2Register" class="screen">
-<h2>ВТОРОЙ ИГРОК</h2>
-<div class="form-group">
-<label>✎ Имя и фамилия второго игрока</label>
-<input type="text" id="player2Name" placeholder="Пётр Петров">
-</div>
-<div class="form-group">
-<label>✎ Класс второго игрока</label>
-<input type="text" id="player2Class" placeholder="Например: 7Б">
-</div>
-<div class="form-group">
-<label>Выберите предмет</label>
-<select id="subject2Players">
-<option value="math">📐 Математика</option>
-<option value="russian">📖 Русский язык</option>
-<option value="literature">📚 Литература</option>
-<option value="history">🏛️ История</option>
-<option value="biology">🧬 Биология</option>
-<option value="geography">🌍 География</option>
-<option value="physics">⚛️ Физика</option>
-<option value="chemistry">🧪 Химия</option>
-<option value="english">🇬🇧 Английский язык</option>
-</select>
-</div>
-<div class="form-group">
-<label>Уровень сложности</label>
-<select id="difficulty2Players">
-<option value="easy">🟢 Лёгкий</option>
-<option value="hard">🟠 Средний</option>
-<option value="impossible">🔴 Невозможный</option>
-</select>
-</div>
-<button class="btn btn-primary" onclick="startGame('2players')">ПРОДОЛЖИТЬ ➤</button>
-<button class="btn btn-secondary" onclick="showScreen('modeSelect')">◄ НАЗАД</button>
-</div>
+    <div id="duelScreen" class="screen">
+      <h2>2 игрока</h2>
+      <div class="panel">
+        <div class="form-group">
+          <label>Имя игрока 1</label>
+          <input id="player1Name" type="text" placeholder="Игрок 1" />
+        </div>
+        <div class="form-group">
+          <label>Имя игрока 2</label>
+          <input id="player2Name" type="text" placeholder="Игрок 2" />
+        </div>
+        <div class="form-group">
+          <label>Предмет</label>
+          <select id="duelSubject">
+            <option value="math">Математика</option>
+            <option value="russian">Русский язык</option>
+            <option value="literature">Литература</option>
+            <option value="history">История</option>
+            <option value="biology">Биология</option>
+            <option value="geography">География</option>
+            <option value="physics">Физика</option>
+            <option value="chemistry">Химия</option>
+            <option value="english">Английский язык</option>
+          </select>
+        </div>
+        <button class="btn" onclick="startDuelGame()">Начать дуэль</button>
+        <button class="btn secondary" onclick="showScreen('modeScreen')">Назад</button>
+      </div>
+    </div>
 
-<div id="teacherLogin" class="screen">
-<h2>👩‍🏫 ВХОД УЧИТЕЛЯ</h2>
-<div class="form-group">
-<label>Выберите аккаунт</label>
-<select id="teacherAccountSelect"></select>
-</div>
-<div class="form-group">
-<label>🔑 Введите PIN-код</label>
-<input type="password" id="teacherPin" placeholder="****" maxlength="4">
-</div>
-<button class="btn btn-primary" onclick="teacherLogin()">ВОЙТИ ➤</button>
-<button class="btn btn-secondary" onclick="showScreen('teacherRegister')">✎ ЗАРЕГИСТРИРОВАТЬСЯ</button>
-<button class="btn btn-secondary" onclick="showScreen('mainScreen')">◄ НАЗАД</button>
-</div>
+    <div id="teacherScreen" class="screen">
+      <h2>Вход учителя</h2>
+      <div class="panel">
+        <div class="form-group">
+          <label>ФИО учителя</label>
+          <input id="teacherName" type="text" placeholder="Имя учителя" />
+        </div>
+        <div class="form-group">
+          <label>PIN-код</label>
+          <input id="teacherPin" type="password" placeholder="1234" maxlength="4" />
+        </div>
+        <button class="btn" onclick="loginTeacher()">Войти</button>
+        <button class="btn secondary" onclick="showScreen('mainScreen')">Назад</button>
+      </div>
+    </div>
 
-<div id="teacherRegister" class="screen">
-<h2>👩‍🏫 РЕГИСТРАЦИЯ УЧИТЕЛЯ</h2>
-<div class="form-group">
-<label>✎ Имя</label>
-<input type="text" id="teacherFirstName" placeholder="Мария">
-</div>
-<div class="form-group">
-<label>✎ Фамилия</label>
-<input type="text" id="teacherLastName" placeholder="Иванова">
-</div>
-<div class="form-group">
-<label>Предмет, который вы ведёте</label>
-<select id="teacherSubject">
-<option value="math">📐 Математика</option>
-<option value="russian">📖 Русский язык</option>
-<option value="literature">📚 Литература</option>
-<option value="history">🏛️ История</option>
-<option value="biology">🧬 Биология</option>
-<option value="geography">🌍 География</option>
-<option value="physics">⚛️ Физика</option>
-<option value="chemistry">🧪 Химия</option>
-<option value="english">🇬🇧 Английский язык</option>
-</select>
-</div>
-<div class="form-group">
-<label>🔑 Придумайте PIN-код (4 цифры)</label>
-<input type="password" id="newTeacherPin" placeholder="****" maxlength="4">
-</div>
-<button class="btn btn-primary" onclick="registerTeacher()">✎ ЗАРЕГИСТРИРОВАТЬСЯ</button>
-<button class="btn btn-secondary" onclick="showScreen('teacherLogin')">◄ НАЗАД</button>
-</div>
+    <div id="teacherPanel" class="screen">
+      <h2>Журнал учителя</h2>
+      <div class="teacher-info" id="teacherInfoBox"></div>
+      <div class="panel">
+        <input id="journalSearch" type="text" placeholder="Поиск по имени или классу" style="margin-bottom:12px;" oninput="renderJournal()" />
+        <div id="journalList" class="journal-list"></div>
+      </div>
+      <button class="btn secondary" onclick="showScreen('mainScreen')">Выйти</button>
+    </div>
 
-<div id="teacherJournal" class="screen">
-<h2>👩‍🏫 ЖУРНАЛ УЧИТЕЛЯ</h2>
-<div class="teacher-info" id="teacherInfo"></div>
-<div class="teacher-journal">
-<div class="settings">
-<select id="roundTime">
-<option value="15">⏱ 15 сек</option>
-<option value="30" selected>⏱ 30 сек</option>
-<option value="45">⏱ 45 сек</option>
-<option value="60">⏱ 60 сек</option>
-</select>
-</div>
-<input type="text" id="searchJournal" class="search-box" placeholder="🔍 Поиск по имени ученика или классу..." oninput="filterJournal()">
-<div class="journal-entries" id="journalEntries">Записи журнала...</div>
-<div class="btn-group">
-<button class="btn btn-primary" onclick="downloadCSV()">📥 Скачать CSV</button>
-<button class="btn btn-secondary" onclick="changePin()">🔑 Сменить PIN</button>
-<button class="btn btn-secondary" onclick="clearJournal()">🗑️ Очистить</button>
-<button class="btn btn-secondary" onclick="teacherLogout()">🚪 ВЫХОД</button>
-</div>
-</div>
-</div>
+    <div id="gameScreen" class="screen">
+      <div class="scoreboard">
+        <div class="player-score">
+          <div class="player-name" id="player1Label">Игрок 1</div>
+          <div class="score" id="player1Score">0</div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="player-score">
+          <div class="player-name" id="player2Label">Игрок 2</div>
+          <div class="score" id="player2Score">0</div>
+        </div>
+      </div>
 
-<div id="gameScreen" class="screen">
-<div class="game-screen">
-<div class="round-info" id="roundInfo">РАУНД 1 / 10</div>
-<div class="score-board">
-<div class="player-score">
-<div class="player-name" id="player1Name">Игрок 1</div>
-<div class="score" id="player1Score">0</div>
-</div>
-<div class="vs">⚔️</div>
-<div class="player-score">
-<div class="player-name" id="player2Name">Игрок 2</div>
-<div class="score" id="player2Score">0</div>
-</div>
-</div>
-<div class="timer" id="timer">⏱ 30 с</div>
-<div id="turnIndicator" class="turn-indicator" style="display:none"></div>
-<div class="question-container" id="questionBox">
-<div class="question" id="question">Загрузка вопроса...</div>
-</div>
-<div class="options-grid" id="optionsGrid"></div>
-<div id="feedbackBox"></div>
-</div>
-</div>
+      <div class="timer" id="timer">15</div>
+      <div class="question-box" id="questionText">Готовим вопрос...</div>
+      <div id="optionsGrid" class="options-grid"></div>
+      <div id="feedbackBox" class="feedback"></div>
+      <button class="btn secondary" onclick="showScreen('mainScreen')">Выйти</button>
+    </div>
 
-<div id="roundEndScreen" class="screen">
-<h2>РАУНД ОКОНЧЕН</h2>
-<p class="subtitle">~ Следующий раунд через 2 сек... ~</p>
-</div>
+    <div id="resultScreen" class="screen">
+      <h2>Итог</h2>
+      <div class="panel" style="text-align:center;">
+        <div id="winnerText" style="font-size:1.8rem; font-weight:700; color:var(--red); margin-bottom:16px;">Победитель</div>
+        <div id="finalScoreText" style="font-size:1.1rem; margin-bottom:12px;"></div>
+        <button class="btn" onclick="showScreen('mainScreen')">На главную</button>
+      </div>
+    </div>
+  </div>
 
-<div id="resultScreen" class="screen">
-<div class="result-screen">
-<h1>🏆 ФИНАЛ!</h1>
-<div class="winner" id="winner">Результат</div>
-<div class="final-score" id="finalScore"></div>
-<button class="btn btn-primary" onclick="restartGame()">🔄 ДУЭЛЬ ЕЩЁ РАЗ</button>
-<button class="btn btn-secondary" onclick="showScreen('mainScreen')">🏠 В ГЛАВНОЕ МЕНЮ</button>
-</div>
-</div>
+  <script>
+    const SUBJECT_MAP = {
+      math: 'Математика',
+      russian: 'Русский язык',
+      literature: 'Литература',
+      history: 'История',
+      biology: 'Биология',
+      geography: 'География',
+      physics: 'Физика',
+      chemistry: 'Химия',
+      english: 'Английский язык'
+    };
 
-</div>
+    const QUESTION_BANK = {
+      math: [
+        { q: 'Сколько будет 12 × 8?', options: ['96', '84', '108', '72'], correct: 0 },
+        { q: 'Чему равен 25% от 200?', options: ['25', '50', '75', '100'], correct: 1 },
+        { q: 'Какое число делится на 9?', options: ['47', '81', '52', '13'], correct: 1 },
+        { q: 'Решите: 7 + 5 × 2', options: ['24', '17', '14', '12'], correct: 1 }
+      ],
+      russian: [
+        { q: 'Как правильно пишется?', options: ['светлые', 'светлые', 'светлые', 'светлые'], correct: 0 },
+        { q: 'Что является главным членом предложения?', options: ['Определение', 'Дополнение', 'Подлежащее', 'Обстоятельство'], correct: 2 },
+        { q: 'Какое слово является антонимом к слову «медленный»?', options: ['быстрый', 'тихий', 'трудный', 'лёгкий'], correct: 0 },
+        { q: 'Какую роль в предложении выполняет сказуемое?', options: ['определяет предмет', 'сообщает действие', 'уточняет причину', 'сравнивает слова'], correct: 1 }
+      ],
+      literature: [
+        { q: 'Кто написал «Евгения Онегина»?', options: ['А. Пушкин', 'Л. Толстой', 'Ф. Достоевский', 'М. Лермонтов'], correct: 0 },
+        { q: 'Кто автор басни «Ворона и Лисица»?', options: ['И. Крылов', 'А. Пушкин', 'Н. Некрасов', 'Л. Толстой'], correct: 0 },
+        { q: 'Какой жанр у басни?', options: ['Роман', 'Ода', 'Басня', 'Эпопея'], correct: 2 },
+        { q: 'Что такое эпитет?', options: ['Сравнение', 'Красочное определение', 'Глагол', 'Союз'], correct: 1 }
+      ],
+      history: [
+        { q: 'Кто был первым президентом России?', options: ['Ельцин', 'Путин', 'Ленин', 'Сталин'], correct: 0 },
+        { q: 'В каком веке началась Великая Отечественная война?', options: ['XIX', 'XX', 'XVIII', 'XXI'], correct: 1 },
+        { q: 'Кто открыл Америку?', options: ['Колумб', 'Пётр I', 'Наполеон', 'Магеллан'], correct: 0 },
+        { q: 'Когда был основан Санкт-Петербург?', options: ['1703', '1801', '1654', '1760'], correct: 0 }
+      ],
+      biology: [
+        { q: 'Чем дышат растения?', options: ['Лишь водой', 'Углекислым газом', 'Метаном', 'Кислородом'], correct: 1 },
+        { q: 'Кровь переносит?', options: ['Только воду', 'Кислород и питательные вещества', 'Только углекислый газ', 'Ничего'], correct: 1 },
+        { q: 'Кто такой хищник?', options: ['Ест растения', 'Ест других животных', 'Не питается', 'Питается грибами'], correct: 1 },
+        { q: 'Где происходит фотосинтез?', options: ['В корнях', 'В листьях', 'В цветах', 'В почве'], correct: 1 }
+      ],
+      geography: [
+        { q: 'Самая большая страна мира?', options: ['Канада', 'Китай', 'Россия', 'США'], correct: 2 },
+        { q: 'Какая планета самая большая?', options: ['Марс', 'Юпитер', 'Венера', 'Меркурий'], correct: 1 },
+        { q: 'Что такое пустыня?', options: ['Большой лес', 'Очень сухая территория', 'Озеро', 'Болото'], correct: 1 },
+        { q: 'Как называется линия, отделяющая северное и южное полушарие?', options: ['Меридиан', 'Экватор', 'Параллель', 'Тропик'], correct: 1 }
+      ],
+      physics: [
+        { q: 'Что такое ускорение?', options: ['Скорость без направления', 'Изменение скорости', 'Масса тела', 'Сила притяжения'], correct: 1 },
+        { q: 'Какая единица измерения силы?', options: ['грамм', 'джоуль', 'ньютон', 'секунда'], correct: 2 },
+        { q: 'Как движется тело при отсутствии силы?', options: ['Остановится', 'Равномерно и прямолинейно', 'Ускорится вниз', 'Повернётся'], correct: 1 },
+        { q: 'Что измеряет термометр?', options: ['Давление', 'Температуру', 'Силу', 'Скорость'], correct: 1 }
+      ],
+      chemistry: [
+        { q: 'Какой газ поддерживает горение?', options: ['Кислород', 'Азот', 'Углекислый газ', 'Водород'], correct: 0 },
+        { q: 'Какая формула воды?', options: ['O2', 'CO2', 'H2O', 'NaCl'], correct: 2 },
+        { q: 'Что находится в центре атома?', options: ['Электрон', 'Протон', 'Ядро', 'Нейтрон'], correct: 2 },
+        { q: 'Какой элемент обозначается Fe?', options: ['Фосфор', 'Железо', 'Фтор', 'Феррий'], correct: 1 }
+      ],
+      english: [
+        { q: 'Translate: Hello', options: ['Пока', 'Привет', 'Дом', 'Солнце'], correct: 1 },
+        { q: 'How are you?', options: ['Как дела?', 'Где ты?', 'Что это?', 'Пойдём'], correct: 0 },
+        { q: 'The word "book" means:', options: ['книга', 'дом', 'море', 'вода'], correct: 0 },
+        { q: 'Choose the correct plural: "child"', options: ['childs', 'childes', 'children', 'child'], correct: 2 }
+      ]
+    };
 
-<script>
-const Q={
-math:{
-easy:[
-{q:"Сколько будет 7 × 8?",o:["54","56","58","64"],c:1},
-{q:"Чему равен √81?",o:["7","8","9","10"],c:2},
-{q:"Сколько будет 15 + 27?",o:["40","41","42","43"],c:2},
-{q:"Чему равно 144 ÷ 12?",o:["10","11","12","14"],c:2},
-{q:"Сколько градусов в развёрнутом угле?",o:["90°","120°","180°","360°"],c:2},
-{q:"Чему равно 9 × 9?",o:["72","81","89","99"],c:1},
-{q:"Сколько будет 100 − 37?",o:["53","63","67","73"],c:1},
-{q:"Найдите 10% от 250",o:["20","25","30","50"],c:1},
-{q:"Сколько будет 6 × 7?",o:["36","42","48","54"],c:1},
-{q:"Чему равно 50 + 35?",o:["75","80","85","95"],c:2},
-{q:"Сколько будет 12 × 4?",o:["44","46","48","52"],c:2},
-{q:"Чему равен √49?",o:["5","6","7","8"],c:2}
-],
-hard:[
-{q:"Решите: 3x − 7 = 14",o:["x = 5","x = 6","x = 7","x = 8"],c:2},
-{q:"Площадь круга r=5? (округлите)",o:["65","72","79","85"],c:2},
-{q:"Найдите: 2⁵ + 3²",o:["37","39","41","45"],c:2},
-{q:"Решите: |2x−5| = 7 (меньший корень)",o:["-6","-1","1","6"],c:1},
-{q:"Чему равен sin 90°?",o:["0","0.5","1","-1"],c:2},
-{q:"Сколько будет 17 × 13?",o:["211","221","231","241"],c:1},
-{q:"Найдите НОД(48, 36)",o:["6","8","12","24"],c:2},
-{q:"Чему равно 5! ?",o:["60","100","120","150"],c:2},
-{q:"Решите: 5x + 3 = 28",o:["x = 4","x = 5","x = 6","x = 7"],c:1},
-{q:"Чему равен √196?",o:["12","13","14","16"],c:2},
-{q:"Сколько будет 23 × 4?",o:["82","88","92","96"],c:2},
-{q:"Решите: x/3 = 9",o:["x = 3","x = 12","x = 27","x = 36"],c:2}
-],
-impossible:[
-{q:"x²−7x+12=0 (сумма корней)",o:["5","6","7","8"],c:2},
-{q:"log₂(64) = ?",o:["4","5","6","7"],c:2},
-{q:"Производная f(x)=4x³−2x²+x",o:["12x²−4x+1","12x²−2x+1","4x²−4x+1","12x−4x+1"],c:0},
-{q:"∫6x² dx от 0 до 2",o:["6","8","12","16"],c:3},
-{q:"Система: 2x+3y=12, x−y=1 (x=?)",o:["2","3","4","5"],c:1},
-{q:"cos 60° × 2 = ?",o:["0.5","1","1.5","2"],c:1},
-{q:"Сколько рёбер у куба?",o:["6","8","10","12"],c:3},
-{q:"Дискриминант x²+4x+4=0",o:["-4","0","4","8"],c:1},
-{q:"Решите: x³ = 27",o:["x = 2","x = 3","x = 4","x = 9"],c:1},
-{q:"Чему равен tg 45°?",o:["0","0.5","1","√2"],c:2},
-{q:"Сумма: 1+2+...+10",o:["45","50","55","60"],c:2},
-{q:"log₁₀(1000) = ?",o:["2","3","4","10"],c:1}
-]
-},
-russian:{
-easy:[
-{q:"Сколько гласных букв в русском алфавите?",o:["6","8","10","12"],c:2},
-{q:"Сколько падежей в русском языке?",o:["4","5","6","7"],c:2},
-{q:"Как пишется: (не)навидеть?",o:["ненавидеть","не навидеть","неенавидеть","нивидеть"],c:0},
-{q:"Сколько согласных букв?",o:["19","20","21","22"],c:2},
-{q:"Сколько букв в слове «Москва»?",o:["5","6","7","8"],c:1},
-{q:"Антоним к слову «день»?",o:["утро","ночь","вечер","завтра"],c:1},
-{q:"Сколько букв в русском алфавите?",o:["30","31","32","33"],c:3},
-{q:"Сколько гласных ЗВУКОВ?",o:["5","6","7","10"],c:1},
-{q:"Сколько шипящих согласных?",o:["3","4","5","6"],c:1},
-{q:"Какой знак в конце восклиц. предложения?",o:[".","!","?","—"],c:1},
-{q:"Сколько букв «й» в слове «лайм»?",o:["0","1","2","3"],c:1},
-{q:"Что такое антонимы?",o:["синонимы","противоположные","однокоренные","устаревшие"],c:1}
-],
-hard:[
-{q:"Часть речи слова «быстро»?",o:["прилагательное","глагол","наречие","существительное"],c:2},
-{q:"Сколько склонений у существительных?",o:["2","3","4","5"],c:1},
-{q:"Найдите причастие:",o:["бегущий","бежал","бег","быстро"],c:0},
-{q:"Вид глагола «написать»?",o:["несовершенный","совершенный","оба","нет вида"],c:1},
-{q:"Сколько спряжений у глаголов?",o:["1","2","3","4"],c:1},
-{q:"Падеж на вопрос «кем?»?",o:["Именительный","Родительный","Дательный","Творительный"],c:3},
-{q:"Сколько времён у глаголов?",o:["2","3","4","5"],c:1},
-{q:"Суффикс в слове «домик»?",o:["-ик-","-ок-","-ек-","-чик-"],c:0},
-{q:"Что такое фразеологизм?",o:["слово","устойчивое выражение","приставка","окончание"],c:1},
-{q:"Сколько чисел у существительных?",o:["1","2","3","4"],c:1},
-{q:"Однокоренное к «вода»?",o:["водить","водитель","водный","водичка"],c:3},
-{q:"Что такое эпитет?",o:["сравнение","образное определение","преувеличение","повтор"],c:1}
-],
-impossible:[
-{q:"Тип сказуемого: «Он был уставшим»?",o:["простое глагольное","составное глагольное","составное именное","нет сказуемого"],c:2},
-{q:"Способ образования «подводный»?",o:["приставочный","суффиксальный","приставочно-суффиксальный","сложение"],c:2},
-{q:"Стиль речи научных статей?",o:["разговорный","художественный","научный","официальный"],c:2},
-{q:"Что такое деепричастный оборот?",o:["деепричастие с зависимыми словами","тип сказуемого","вид предложения","часть речи"],c:0},
-{q:"Тип предложения «Светает.»?",o:["двусоставное","безличное","назывное","определённо-личное"],c:1},
-{q:"Что такое парцелляция?",o:["намеренный разрыв предложения","тип словосочетания","вид пунктуации","стиль речи"],c:0},
-{q:"Роль слова «вчера» в предложении?",o:["подлежащее","сказуемое","обстоятельство","дополнение"],c:2},
-{q:"Сколько типов сказуемых?",o:["2","3","4","5"],c:1},
-{q:"Что такое инверсия?",o:["обратный порядок слов","повтор","вопрос","восклицание"],c:0},
-{q:"Вид причастия: «прочитанный»?",o:["настоящего времени","прошедшего времени","деепричастие","нет вида"],c:1},
-{q:"Что такое оксюморон?",o:["сочетание противоположностей","повтор","сравнение","преувеличение"],c:0},
-{q:"Сколько типов односоставных предложений?",o:["2","3","4","5"],c:2}
-]
-},
-literature:{
-easy:[
-{q:"Кто написал «Евгений Онегин»?",o:["Лермонтов","Пушкин","Гоголь","Толстой"],c:1},
-{q:"Герой «Капитанской дочки»?",o:["Гринёв","Чацкий","Онегин","Печорин"],c:0},
-{q:"Автор басен о животных?",o:["Пушкин","Крылов","Некрасов","Фет"],c:1},
-{q:"В каком веке жил Пушкин?",o:["XVIII","XIX","XX","XVII"],c:1},
-{q:"Поэма Гоголя о мёртвых душах?",o:["Ревизор","Мёртвые души","Нос","Шинель"],c:1},
-{q:"Кто написал «Муму»?",o:["Тургенев","Чехов","Достоевский","Гоголь"],c:0},
-{q:"Автор сказки о рыбаке и рыбке?",o:["Пушкин","Ершов","Толстой","Жуковский"],c:0},
-{q:"Кто написал «Дубровского»?",o:["Пушкин","Тургенев","Гоголь","Лермонтов"],c:0},
-{q:"Автор «Конька-Горбунка»?",o:["Пушкин","Ершов","Жуковский","Барто"],c:1},
-{q:"Кто написал «Бородино»?",o:["Лермонтов","Пушкин","Толстой","Жуковский"],c:1},
-{q:"Автор «Айболит»?",o:["Маршак","Чуковский","Михалков","Барто"],c:1},
-{q:"Кто написал «Фильтр двойной»?",o:["Асадов","Есенин","Цветаева","Ахматова"],c:0}
-],
-hard:[
-{q:"Кто написал «Войну и мир»?",o:["Достоевский","Тургенев","Толстой","Чехов"],c:2},
-{q:"Жанр «Ревизора»?",o:["трагедия","комедия","повесть","роман"],c:1},
-{q:"Автор «Мастера и Маргариты»?",o:["Булгаков","Пастернак","Шолохов","Ахматова"],c:0},
-{q:"Год рождения Лермонтова?",o:["1809","1814","1821","1837"],c:1},
-{q:"Роман Достоевского о преступлении?",o:["Идиот","Бесы","Преступление и наказание","Братья Карамазовы"],c:2},
-{q:"Кто написал «Отцы и дети»?",o:["Тургенев","Гончаров","Островский","Писемский"],c:0},
-{q:"Автор «Горе от ума»?",o:["Пушкин","Грибоедов","Лермонтов","Фонвизин"],c:1},
-{q:"Год рождения Пушкина?",o:["1795","1799","1803","1809"],c:1},
-{q:"Автор «Героя нашего времени»?",o:["Пушкин","Гоголь","Лермонтов","Тургенев"],c:2},
-{q:"Кто написал «Вишнёвый сад»?",o:["Горький","Чехов","Островский","Бунин"],c:1},
-{q:"Автор «Тёмных аллей»?",o:["Бунин","Набоков","Шмелёв","Куприн"],c:0},
-{q:"Кто написал «Тихий Дон»?",o:["Шолохов","Фадеев","Симонов","Твардовский"],c:0}
-],
-impossible:[
-{q:"Приём в «Мёртвых душах»?",o:["метафора","гипербола","сатира","лиризм"],c:2},
-{q:"Автор «Слова о полку Игореве»?",o:["Неизвестен","Пушкин","Ломоносов","Державин"],c:0},
-{q:"Что такое Серебряный век?",o:["рубеж XIX-XX вв.","XVIII век","советский период","эпоха классицизма"],c:0},
-{q:"Кто написал «Реквием»?",o:["Ахматова","Цветаева","Мандельштам","Пастернак"],c:0},
-{q:"Жанр «Тихого Дона»?",o:["роман-эпопея","повесть","рассказ","поэма"],c:0},
-{q:"Автор «Доктора Живаго»?",o:["Пастернак","Шолохов","Солженицын","Булгаков"],c:0},
-{q:"Год написания «Евгения Онегина»?",o:["1823-1831","1816-1820","1830-1837","1810-1815"],c:0},
-{q:"Кто написал «Преступление и наказание»?",o:["Толстой","Тургенев","Достоевский","Чехов"],c:2},
-{q:"Автор «Архипелага ГУЛАГ»?",o:["Шаламов","Солженицын","Гроссман","Варлам Шаламов"],c:1},
-{q:"Кто написал «Мастер и Маргарита»?",o:["Платонов","Булгаков","Зощенко","Ильф и Петров"],c:1},
-{q:"Что такое акмеизм?",o:["течение в поэзии","жанр прозы","вид драмы","стиль живописи"],c:0},
-{q:"Автор «Двенадцати»?",o:["Маяковский","Есенин","Блок","Хлебников"],c:2}
-]
-},
-history:{
-easy:[
-{q:"Год начала Второй мировой?",o:["1914","1939","1941","1945"],c:1},
-{q:"Первый президент России?",o:["Горбачёв","Ельцин","Путин","Ленин"],c:1},
-{q:"Год падения Берлинской стены?",o:["1985","1989","1991","1993"],c:1},
-{q:"Кто открыл Америку?",o:["Магеллан","Колумб","Васко да Гама","Кортес"],c:1},
-{q:"Век Октябрьской революции?",o:["XVIII","XIX","XX","XXI"],c:2},
-{q:"Первый царь всея Руси?",o:["Иван III","Иван IV","Пётр I","Василий III"],c:1},
-{q:"Год полёта в космос?",o:["1957","1961","1965","1969"],c:1},
-{q:"Глава СССР в ВОВ?",o:["Ленин","Сталин","Хрущёв","Брежнев"],c:1},
-{q:"Столица Древней Руси?",o:["Москва","Новгород","Киев","Владимир"],c:2},
-{q:"Кто победил в Куликовской битве?",o:["Батый","Мамай","Дмитрий Донской","Тохтамыш"],c:2},
-{q:"Год основания Москвы?",o:["1147","1242","1380","1480"],c:0},
-{q:"Кто был первым императором России?",o:["Иван IV","Пётр I","Александр I","Николай I"],c:1}
-],
-hard:[
-{q:"Год Куликовской битвы?",o:["1223","1240","1380","1480"],c:2},
-{q:"Реформатор России XVIII века?",o:["Иван Грозный","Пётр I","Александр I","Николай II"],c:1},
-{q:"Год отмены крепостного права?",o:["1812","1861","1905","1917"],c:1},
-{q:"Первый царь из Романовых?",o:["Фёдор","Михаил","Алексей","Пётр"],c:1},
-{q:"Год начала ВОВ?",o:["1939","1940","1941","1942"],c:2},
-{q:"Основатель Санкт-Петербурга?",o:["Иван IV","Пётр I","Екатерина II","Александр I"],c:1},
-{q:"Год крещения Руси?",o:["882","988","1054","1147"],c:1},
-{q:"Автор «Русской Правды»?",o:["Владимир","Ярослав Мудрый","Мономах","Долгоруки��"],c:1},
-{q:"Год Бородинской битвы?",o:["1805","1812","1813","1815"],c:1},
-{q:"Кто возглавил ополчение 1612?",o:["Минин и Пожарский","Ермак","Суворов","Кутузов"],c:0},
-{q:"Год Полтавской битвы?",o:["1700","1709","1721","1725"],c:1},
-{q:"Кто подписал договор о Беловежской пуще?",o:["Горбачёв","Ельцин, Кравчук, Шушкевич","Путин","Назарбаев"],c:1}
-],
-impossible:[
-{q:"Договор конца Первой мировой?",o:["Версальский","Венский","Парижский","Ялтинский"],c:0},
-{q:"Год битвы на Калке?",o:["1223","1237","1240","1242"],c:0},
-{q:"Год падения Византии?",o:["1204","1389","1453","1492"],c:2},
-{q:"Первый император Рима?",o:["Цезарь","Август","Нерон","Калигула"],c:1},
-{q:"Год Французской революции?",o:["1776","1789","1812","1848"],c:1},
-{q:"Основатель династии Рюриковичей?",o:["Олег","Рюрик","Игорь","Святослав"],c:1},
-{q:"Год Ледового побоища?",o:["1223","1240","1242","1380"],c:2},
-{q:"Столица до Москвы?",o:["Киев","Владимир","Новгород","Суздаль"],c:1},
-{q:"Год Грюнвальдской битвы?",o:["1380","1410","1453","1480"],c:1},
-{q:"Кто был регентом при малолетнем Иване IV?",o:["Глинские","Шуйские","Годуновы","Романовы"],c:0},
-{q:"Год Стояния на Угре?",o:["1380","1410","1480","1547"],c:2},
-{q:"Автор «Повести временных лет»?",o:["Нестор","Иларион","Сильвестр","Климент"],c:0}
-]
-},
-biology:{
-easy:[
-{q:"Камер в сердце человека?",o:["2","3","4","5"],c:2},
-{q:"Орган дыхания?",o:["сердце","печень","лёгкие","почки"],c:2},
-{q:"Что дают растения при фотосинтезе?",o:["CO₂","кислород","азот","водород"],c:1},
-{q:"Сколько ног у насекомого?",o:["4","6","8","10"],c:1},
-{q:"Самая большая кость?",o:["плечевая","бедренная","берцовая","рёбра"],c:1},
-{q:"Сколько органов чувств?",o:["3","4","5","6"],c:2},
-{q:"Какой газ выдыхаем?",o:["кислород","азот","углекислый газ","водород"],c:2},
-{q:"«Кирпичик» организма?",o:["ткань","клетка","орган","система"],c:1},
-{q:"Сколько зубов у взрослого?",o:["28","30","32","34"],c:2},
-{q:"Самый большой орган?",o:["печень","кожа","лёгкие","кишечник"],c:1},
-{q:"Что производит поджелудочная?",o:["желчь","инсулин","адреналин","тироксин"],c:1},
-{q:"Сколько долей в лёгких справа?",o:["1","2","3","4"],c:2}
-],
-hard:[
-{q:"Витамин от солнца?",o:["A","B","C","D"],c:3},
-{q:"Хромосом у человека?",o:["23","46","48","64"],c:1},
-{q:"Орган инсулина?",o:["печень","поджелудочная","почки","селезёнка"],c:1},
-{q:"Что такое митоз?",o:["деление половых клеток","деление соматических клеток","слияние клеток","гибель клеток"],c:1},
-{q:"Универсальный донор крови?",o:["I (O)","II (A)","III (B)","IV (AB)"],c:0},
-{q:"Костей у взрослого?",o:["150","206","250","300"],c:1},
-{q:"Где основное пищеварение?",o:["рот","желудок","тонкий кишечник","толстый кишечник"],c:2},
-{q:"Самый большой орган?",o:["печень","кожа","лёгкие","кишечник"],c:1},
-{q:"Что такое эритроциты?",o:["лейкоциты","красные кровяные клетки","тромбоциты","плазма"],c:1},
-{q:"Сколько отделов позвоночника?",o:["3","4","5","6"],c:2},
-{q:"Гормон стресса?",o:["инсули��","адреналин","окситоцин","мелатонин"],c:1},
-{q:"Что такое ген?",o:["клетка","участок ДНК","белок","орган"],c:1}
-],
-impossible:[
-{q:"Процесс в митохондриях?",o:["фотосинтез","клеточное дыхание","деление","секреция"],c:1},
-{q:"Фермент для белков в желудке?",o:["амилаза","пепсин","липаза","трипсин"],c:1},
-{q:"Расшифровка ДНК?",o:["дезоксирибонуклеиновая кислота","дирибонуклеиновая","диоксидная кислота","денатурационная кислота"],c:0},
-{q:"Тип деления для роста?",o:["митоз","мейоз","амитоз","эндомитоз"],c:0},
-{q:"Гормон сахара в крови?",o:["адреналин","инсулин","тироксин","кортизол"],c:1},
-{q:"Пар черепных нервов?",o:["10","12","14","16"],c:1},
-{q:"Что такое фагоцитоз?",o:["поглощение частиц клеткой","деление","секреция","дыхание"],c:0},
-{q:"Органоид синтеза белка?",o:["лизосома","рибосома","вакуоль","ядро"],c:1},
-{q:"Что такое кариотип?",o:["набор генов","набор хромосом","вид клеток","тип тканей"],c:1},
-{q:"Сколько пар хромосом?",o:["21","22","23","24"],c:2},
-{q:"Что такое аллель?",o:["вариант гена","тип клетки","орган","ткань"],c:0},
-{q:"Кто открыл клетку?",o:["Дарвин","Гук","Мендель","Пастер"],c:1}
-]
-},
-geography:{
-easy:[
-{q:"Самая длинная река?",o:["Амазонка","Нил","Миссисипи","Янцзы"],c:1},
-{q:"Столица Франции?",o:["Лондон","Париж","Берлин","Мадрид"],c:1},
-{q:"Самый большой океан?",o:["Атлантический","Индийский","Тихий","Северный Ледовитый"],c:2},
-{q:"Материк Египта?",o:["Азия","Африка","Европа","Австралия"],c:1},
-{q:"Самая большая страна?",o:["Канада","Китай","США","Россия"],c:3},
-{q:"Столица России?",o:["Санкт-Петербург","Москва","Казань","Новосибирск"],c:1},
-{q:"Сколько материков?",o:["4","5","6","7"],c:2},
-{q:"Столица США?",o:["Нью-Йорк","Вашингтон","Лос-Анджелес","Чикаго"],c:1},
-{q:"Самое большое озеро?",o:["Байкал","Каспийское","Виктория","Верхнее"],c:1},
-{q:"Столица Германии?",o:["Мюнхен","Берлин","Гамбург","Франкфурт"],c:1},
-{q:"Сколько океанов?",o:["3","4","5","6"],c:2},
-{q:"Самый маленький материк?",o:["Европа","Антарктида","Австралия","Южная Америка"],c:2}
-],
-hard:[
-{q:"Самая высокая гора?",o:["К2","Канченджанга","Эверест","Лхоцзе"],c:2},
-{q:"Столица Австралии?",o:["Сидней","Мельбурн","Канберра","Перт"],c:2},
-{q:"Самое глубокое озеро?",o:["Каспийское","Байкал","Танганьика","Виктория"],c:1},
-{q:"Страна Мачу-Пикчу?",o:["Боливия","Чили","Перу","Эквадор"],c:2},
-{q:"Пролив Европа—Африка?",o:["Босфор","Гибралтар","Дарданеллы","Ла-Манш"],c:1},
-{q:"Столица Канады?",o:["Торонто","Ванкувер","Оттава","Монреаль"],c:2},
-{q:"Самая большая пустыня?",o:["Гоби","Калахари","Сахара","Каракумы"],c:2},
-{q:"Столица Бразилии?",o:["Рио-де-Жанейро","Сан-Паулу","Бразилиа","Сальвадор"],c:2},
-{q:"Самый длинный горный хребет?",o:["Гималаи","Альпы","Анды","Урал"],c:2},
-{q:"Столица Турции?",o:["Стамбул","Анкара","Измир","Бурса"],c:1},
-{q:"Самая длинная река Европы?",o:["Дунай","Рейн","Волга","Днепр"],c:2},
-{q:"Столица ЮАР?",o:["Йоханнесбург","Кейптаун","Претория","Дурбан"],c:2}
-],
-impossible:[
-{q:"Самый высокий вулкан?",o:["Эверест","Килиманджаро","Охос-дель-Саладо","Эльбрус"],c:2},
-{q:"Океан Марианской впадины?",o:["Атлантический","Индийский","Тихий","Северный Ледовитый"],c:2},
-{q:"Страна с максимумом островов?",o:["Индонезия","Филиппины","Швеция","Финляндия"],c:2},
-{q:"Столица Новой Зеландии?",o:["Окленд","Веллингтон","Крайстчерч","Гамильтон"],c:1},
-{q:"Самое солёное море?",o:["Красное","Мёртвое","Средиземное","Каспийское"],c:1},
-{q:"Столица Казахстана?",o:["Алматы","Астана","Шымкент","Караганда"],c:1},
-{q:"Северная точка Евразии?",o:["мыс Челюскина","мыс Дежнёва","мыс Нордкап","мыс Рока"],c:0},
-{q:"Страна Тимбукту?",o:["Чад","Нигер","Мали","Сенегал"],c:2},
-{q:"Самая высокая точка Африки?",o:["Килиманджаро","Кения","Эльбрус","Рувензори"],c:0},
-{q:"Самое большое государство Африки?",o:["Судан","Алжир","Ливия","Конго"],c:1},
-{q:"Столица Мьянмы?",o:["Янгон","Нейпьидо","Мандалай","Моламьяйн"],c:1},
-{q:"Самый большой остров?",o:["Мадагаскар","Гренландия","Борнео","Новая Гвинея"],c:1}
-]
-},
-physics:{
-easy:[
-{q:"Что в ньютонах?",o:["масса","сила","энергия","мощность"],c:1},
-{q:"Что притягивает к Земле?",o:["магнетизм","гравитация","электричество","инерция"],c:1},
-{q:"Единица энергии?",o:["ватт","ньютон","джоуль","паскаль"],c:2},
-{q:"Вода при 0°C?",o:["кипит","замерзает","испаряется","конденсируется"],c:1},
-{q:"Ближайшая планета к Солнцу?",o:["Венера","Земля","Марс","Меркурий"],c:3},
-{q:"Что в амперах?",o:["напряжение","сила тока","сопротивление","мощность"],c:1},
-{q:"Самая маленькая частица?",o:["атом","молекула","электрон","ион"],c:2},
-{q:"Что в секундах?",o:["длина","масса","время","сила"],c:2},
-{q:"Что измеряется в вольтах?",o:["сила тока","напряжение","мощность","сопротивление"],c:1},
-{q:"Скорость звука в воздухе?",o:["100 м/с","340 м/с","1000 м/с","3000 м/с"],c:1},
-{q:"Что такое масса?",o:["сила","мера инертности","энергия","скорость"],c:1},
-{q:"Что измеряется в омах?",o:["напряжение","ток","сопротивление","мощность"],c:2}
-],
-hard:[
-{q:"Закон движения планет?",o:["Ньютона","Кеплера","Галилея","Архимеда"],c:1},
-{q:"Что такое электрический ток?",o:["движение зарядов","напряжение","сопротивление","магнитное поле"],c:0},
-{q:"Формула кинетической энергии?",o:["mgh","mv²/2","Fs","pV"],c:1},
-{q:"Что в ваттах?",o:["энергия","работа","мощность","сила"],c:2},
-{q:"Скорость света?",o:["150 000 км/с","300 000 км/с","500 000 км/с","1 000 000 км/с"],c:1},
-{q:"Что такое инерция?",o:["ускорение","сохранение состояния","трение","деформация"],c:1},
-{q:"Основной закон Ньютона?",o:["1-й","2-й (F=ma)","3-й","закон всемирного тяготения"],c:1},
-{q:"Что в паскалях?",o:["сила","давление","энергия","мощность"],c:1},
-{q:"Единица частоты?",o:["герц","ватт","джоуль","ньютон"],c:0},
-{q:"Что такое ускорение?",o:["скорость","изменение скорости","путь","масса"],c:1},
-{q:"Формула работы?",o:["Ft","Fs","mv","ma"],c:1},
-{q:"Что такое резонанс?",o:["затухание","совпадение частот","отражение","поглощение"],c:1}
-],
-impossible:[
-{q:"Что такое квантовая механика?",o:["физика макромира","физика микромира","астрономия","термодинамика"],c:1},
-{q:"Принцип лазера?",o:["интерференция","вынужденное излучение","дифракция","поляризация"],c:1},
-{q:"Сверхпроводимость?",o:["высокое сопротивление","нулевое сопротивление","магнетизм","теплопроводность"],c:1},
-{q:"Формула гравитации?",o:["F=ma","F=Gm₁m₂/r²","F=kq₁q₂/r²","E=mc²"],c:1},
-{q:"Эффект Доплера?",o:["изменение частоты при движении","искривление света","рассеяние","поглощение"],c:0},
-{q:"Принцип неопределённости?",o:["Ньютона","Гейзенберга","Эйнштейна","Бора"],c:1},
-{q:"Переносчик света?",o:["электрон","протон","фотон","нейтрон"],c:2},
-{q:"Что такое энтропия?",o:["мера беспорядка","температура","давление","энергия"],c:0},
-{q:"Постоянная Планка?",o:["h","G","c","k"],c:0},
-{q:"Что такое бозон?",o:["фермион","частица с целым спином","антиматерия","волна"],c:1},
-{q:"Формула Эйнштейна?",o:["F=ma","E=mc²","E=hf","PV=nRT"],c:1},
-{q:"Что такое тёмная материя?",o:["чёрные дыры","невидимая материя","антиматерия","вакуум"],c:1}
-]
-},
-chemistry:{
-easy:[
-{q:"Символ золота?",o:["Ag","Au","Fe","Cu"],c:1},
-{q:"Элементов в таблице Менделеева?",o:["92","108","118","126"],c:2},
-{q:"Что такое H₂O?",o:["соль","вода","кислота","газ"],c:1},
-{q:"Какой газ вдыхаем?",o:["CO₂","азот","кислород","водород"],c:2},
-{q:"Символ железа?",o:["J","Fe","Ir","Fr"],c:1},
-{q:"Протонов у водорода?",o:["0","1","2","3"],c:1},
-{q:"Самый лёгкий газ?",o:["гелий","водород","литий","неон"],c:1},
-{q:"Что такое атом?",o:["молекула","мельчайшая частица элемента","ион","изотоп"],c:1},
-{q:"Символ натрия?",o:["N","Na","Ni","Ne"],c:1},
-{q:"Что такое молекула?",o:["атом","группа атомов","ион","электрон"],c:1},
-{q:"Сколько электронов у углерода?",o:["4","6","8","12"],c:1},
-{q:"pH воды?",o:["5","6","7","8"],c:2}
-],
-hard:[
-{q:"Элемент №6?",o:["азот","кислород","углерод","бор"],c:2},
-{q:"Что такое pH?",o:["плотность","кислотность","масса","объём"],c:1},
-{q:"Формула серной кислоты?",o:["HCl","HNO₃","H₂SO₄","H₃PO₄"],c:2},
-{q:"Что такое изотоп?",o:["разные элементы","атомы с разной массой","ионы","молекулы"],c:1},
-{q:"Газ: кислота + металл?",o:["кислород","азот","водород","хлор"],c:2},
-{q:"Электронов у кислорода?",o:["6","8","10","12"],c:1},
-{q:"Что такое валентность?",o:["масса","способность к связям","плотность","объём"],c:1},
-{q:"Самый частый элемент в коре?",o:["кремний","железо","кислород","алюминий"],c:2},
-{q:"Формула поваренной соли?",o:["NaCl","KCl","CaCl₂","MgCl₂"],c:0},
-{q:"Что такое ион?",o:["нейтральный атом","заряженная частица","молекула","электрон"],c:1},
-{q:"Символ серебра?",o:["Sr","Ag","Au","Sn"],c:1},
-{q:"Что такое катализатор?",o:["ускоряет реакцию","замедляет","останавливает","не влияет"],c:0}
-],
-impossible:[
-{q:"Ковалентная связь?",o:["между ионами","общие электроны","металлическая","водородная"],c:1},
-{q:"Тип: 2H₂+O₂=2H₂O?",o:["разложения","соединения","замещения","обмена"],c:1},
-{q:"Молярная масса?",o:["масса 1 атома","масса 1 моля","плотность","объём"],c:1},
-{q:"Самый электроотрицательный?",o:["кислород","хлор","фтор","азот"],c:2},
-{q:"Что такое катализатор?",o:["ускоряет реакцию","замедляет","останавливает","не влияет"],c:0},
-{q:"Электроотрицательность?",o:["способность принимать электроны","отдавать","масса","объём"],c:0},
-{q:"«Весёлый» газ?",o:["CO","N₂O","CO₂","CH₄"],c:1},
-{q:"Что такое аллотропия?",o:["разные формы элемента","типы связей","реакции","соли"],c:0},
-{q:"Что такое авогардово число?",o:["6×10²³","3×10⁸","1.6×10⁻¹⁹","9.8"],c:0},
-{q:"Формула метана?",o:["CH₄","C₂H₆","C₃H₈","C₄H₁₀"],c:0},
-{q:"Что такое электролиз?",o:["разложение током","нагрев","смешивание","фильтрация"],c:0},
-{q:"Самый тяжёлый природный элемент?",o:["свинец","уран","плутоний","радий"],c:1}
-]
-},
-english:{
-easy:[
-{q:"Перевод «cat»?",o:["собака","кошка","мышь","птица"],c:1},
-{q:"«Книга» по-английски?",o:["pen","book","table","chair"],c:1},
-{q:"Цвет «red»?",o:["синий","зелёный","красный","жёлтый"],c:2},
-{q:"«Привет» по-английски?",o:["bye","hello","sorry","thanks"],c:1},
-{q:"«Собака» по-английски?",o:["cat","dog","bird","fish"],c:1},
-{q:"Перевод «apple»?",o:["груша","яблоко","банан","апельсин"],c:1},
-{q:"«Спасибо» по-английски?",o:["please","sorry","thank you","hello"],c:2},
-{q:"Дней в неделе?",o:["5","6","7","8"],c:2},
-{q:"«Школа» по-английски?",o:["home","school","work","shop"],c:1},
-{q:"Перевод «water»?",o:["огонь","вода","земля","воздух"],c:1},
-{q:"«Мама» по-английски?",o:["father","mother","sister","brother"],c:1},
-{q:"Перевод «sun»?",o:["луна","звезда","солнце","небо"],c:2}
-],
-hard:[
-{q:"Время в «I have been working»?",o:["Present Simple","Present Continuous","Present Perfect Continuous","Past Simple"],c:2},
-{q:"Перевод «although»?",o:["потому что","хотя","поэтому","однако"],c:1},
-{q:"«Я бы хотел»?",o:["I want","I would like","I need","I must"],c:1},
-{q:"Множественное от «child»?",o:["childs","childes","children","childrens"],c:2},
-{q:"Перевод «however»?",o:["однако","поэтому","потому что","кроме"],c:0},
-{q:"Past Simple от «go»?",o:["goed","gone","went","going"],c:2},
-{q:"Сравнительная от «good»?",o:["gooder","better","best","more good"],c:1},
-{q:"Артикль с неисчисляемыми?",o:["a","an","the","без артикля"],c:3},
-{q:"Перевод «quickly»?",o:["медленно","быстро","тихо","громко"],c:1},
-{q:"Past Participle от «write»?",o:["wrote","written","writing","writes"],c:1},
-{q:"«Много» (исчисляемые)?",o:["much","many","little","few"],c:1},
-{q:"Перевод «although»?",o:["потому что","хотя","поэтому","кроме"],c:1}
-],
-impossible:[
-{q:"Тип: «If I had known...»?",o:["First Conditional","Second Conditional","Third Conditional","Zero Conditional"],c:2},
-{q:"Перевод «nevertheless»?",o:["никогда","тем не менее","всегда","поэтому"],c:1},
-{q:"Passive в Present Perfect?",o:["has done","has been done","is done","was done"],c:1},
-{q:"Синоним «beautiful»?",o:["ugly","gorgeous","bad","boring"],c:1},
-{q:"Тип: «The book that I read»?",o:["adverbial","defining relative","non-defining","conditional"],c:1},
-{q:"Перевод «whereas»?",o:["где","тогда как","пока","где-то"],c:1},
-{q:"Future Perfect от «write»?",o:["will write","will be writing","will have written","writes"],c:2},
-{q:"Что такое Gerund?",o:["инфинитив","глагол+ing как сущ.","причастие","деепричастие"],c:1},
-{q:"Past Perfect от «go»?",o:["had gone","has gone","went","going"],c:0},
-{q:"Перевод «scarcely»?",o:["едва","широко","часто","редко"],c:0},
-{q:"«Независимо от»?",o:["despite","because","although","therefore"],c:0},
-{q:"Reported Speech: «I am»?",o:["he is","he was","he has","he had"],c:1}
-]
-}
-};
+    const teacherCode = '1234';
+    let currentScreen = 'mainScreen';
+    let gameState = null;
+    let timerId = null;
+    let cloudEnabled = false;
+    let firestore = null;
 
-const SN={math:'📐 Математика',russian:'📖 Русский язык',literature:'📚 Литература',history:'🏛️ История',biology:'🧬 Биология',geography:'🌍 География',physics:'⚛️ Физика',chemistry:'🧪 Химия',english:'🇬🇧 Английский язык'};
-const DN={easy:'🟢 Лёгкий',hard:'🟠 Средний',impossible:'🔴 Невозможный'};
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+      currentScreen = id;
+    }
 
-let G={mode:null,diff:null,subj:null,p1:null,p2:null,round:1,total:5,s1:0,s2:0,tmr:null,time:30,q:null,active:false,currentTurn:1};
-let CT=null;
+    function setCloudStatus(mode, text) {
+      const el = document.getElementById('cloudStatus');
+      el.className = 'cloud-status';
+      if (mode === 'ok') el.classList.add('ok');
+      if (mode === 'err') el.classList.add('err');
+      if (mode === 'wait') el.classList.add('wait');
+      el.textContent = text;
+    }
 
-function lJ(){const s=localStorage.getItem('dJ');return s?JSON.parse(s):[]}
-function sJ(e){const j=lJ();j.push(e);localStorage.setItem('dJ',JSON.stringify(j))}
-function lT(){const s=localStorage.getItem('tch');return s?JSON.parse(s):{}}
-function sT(t){localStorage.setItem('tch',JSON.stringify(t))}
+    function initFirebase() {
+      try {
+        if (!window.firebaseConfig || !window.firebaseConfig.apiKey || !window.firebaseConfig.projectId) {
+          setCloudStatus('wait', 'Локальный режим');
+          return;
+        }
+        const firebaseApp = firebase.initializeApp(window.firebaseConfig);
+        firestore = firebase.firestore();
+        cloudEnabled = true;
+        setCloudStatus('ok', 'Firebase OK');
+      } catch (e) {
+        cloudEnabled = false;
+        setCloudStatus('err', 'Firebase OFF');
+      }
+    }
 
-function showScreen(id){
-document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-document.getElementById(id).classList.add('active');
-if(id==='teacherLogin')updTA();
-if(id==='teacherJournal')dJ();
-}
+    function saveJournalEntry(entry) {
+      const data = {
+        student: entry.student,
+        className: entry.className,
+        subject: entry.subject,
+        result: entry.result,
+        timestamp: new Date().toISOString(),
+        mode: entry.mode || 'bot'
+      };
 
-function registerStudent(){
-const n=document.getElementById('studentName').value.trim();
-const c=document.getElementById('studentClass').value.trim();
-if(!n||!c){alert('Введите имя и класс');return}
-G.p1={name:n,cls:c};
-showScreen('modeSelect');
-}
+      if (!cloudEnabled || !firestore) {
+        const key = 'arena-duel-local-journal';
+        let arr = JSON.parse(localStorage.getItem(key) || '[]');
+        arr.unshift(data);
+        localStorage.setItem(key, JSON.stringify(arr));
+        return Promise.resolve();
+      }
 
-function selectSubject(){
-G.subj=document.getElementById('subjectSelectBox').value;
-showScreen('difficultySelect');
-}
+      return firestore.collection('journal').add(data).catch(() => {
+        const key = 'arena-duel-local-journal';
+        let arr = JSON.parse(localStorage.getItem(key) || '[]');
+        arr.unshift(data);
+        localStorage.setItem(key, JSON.stringify(arr));
+      });
+    }
 
-function startGame(mode,diff){
-if(mode==='2players'){
-const n=document.getElementById('player2Name').value.trim();
-const c=document.getElementById('player2Class').value.trim();
-const s=document.getElementById('subject2Players').value;
-const d=document.getElementById('difficulty2Players').value;
-if(!n||!c){alert('Введите имя и класс второго игрока');return}
-G.p2={name:n,cls:c};
-G.subj=s;
-G.diff=d;
-G.total=10; // В режиме 2 игроков — 10 раундов
-}else{
-G.p2={name:'🤖 Бот',cls:'Бот'};
-G.diff=diff;
-G.total=5; // В режиме с ботом — 5 раундов
-}
-G.mode=mode;
-G.round=1;
-G.s1=0;
-G.s2=0;
-document.getElementById('player1Name').textContent=G.p1.name;
-document.getElementById('player2Name').textContent=G.p2.name;
-document.getElementById('player1Score').textContent='0';
-document.getElementById('player2Score').textContent='0';
-showScreen('gameScreen');
-startRound();
-}
+    function renderJournal() {
+      const box = document.getElementById('journalList');
+      const query = (document.getElementById('journalSearch') || {}).value || '';
+      const rows = JSON.parse(localStorage.getItem('arena-duel-local-journal') || '[]');
 
-function startRound(){
-G.active=true;
-G.time=parseInt(document.getElementById('roundTime').value);
+      const filtered = rows.filter(item => {
+        const text = `${item.student || ''} ${item.className || ''} ${item.subject || ''}`.toLowerCase();
+        return text.includes(query.toLowerCase());
+      });
 
-// В режиме 2 игроков: нечётные раунды — игрок 1, чётные — игрок 2
-if(G.mode==='2players'){
-G.currentTurn=(G.round%2===1)?1:2;
-}else{
-G.currentTurn=1;
-}
+      if (!filtered.length) {
+        box.innerHTML = '<div class="empty">Пока нет записей в журнале</div>';
+        return;
+      }
 
-document.getElementById('roundInfo').textContent='РАУНД '+G.round+' / '+G.total+' • '+SN[G.subj]+' • '+DN[G.diff];
-const pool=Q[G.subj][G.diff];
-G.q=pool[Math.floor(Math.random()*pool.length)];
-renderQuestion();
-updT();
-if(G.tmr)clearInterval(G.tmr);
-G.tmr=setInterval(()=>{
-G.time--;updT();
-if(G.time<=0)endRound();
-},1000);
-}
+      box.innerHTML = filtered.map(item => `
+        <div class="journal-entry">
+          <strong>${item.student}</strong><br>
+          Класс: ${item.className || '-'}<br>
+          Предмет: ${SUBJECT_MAP[item.subject] || item.subject}<br>
+          Результат: ${item.result}<br>
+          Время: ${new Date(item.timestamp).toLocaleString('ru-RU')}
+        </div>
+      `).join('');
+    }
 
-function renderQuestion(){
-const qEl=document.getElementById('question');
-const optGrid=document.getElementById('optionsGrid');
-const fbBox=document.getElementById('feedbackBox');
-const turnInd=document.getElementById('turnIndicator');
+    function setTeacherInfo() {
+      const name = (document.getElementById('teacherName') || {}).value || 'Учитель';
+      document.getElementById('teacherInfoBox').innerHTML = `<strong>${name}</strong> — журнал результатов`;
+    }
 
-fbBox.innerHTML='';
-qEl.textContent=G.q.q;
+    function goToMode() {
+      const name = document.getElementById('studentName').value.trim();
+      const cls = document.getElementById('studentClass').value.trim();
+      if (!name || !cls) {
+        alert('Введите имя и класс');
+        return;
+      }
+      showScreen('modeScreen');
+    }
 
-if(G.mode==='2players'){
-const currentPlayerName=G.currentTurn===1?G.p1.name:G.p2.name;
-turnInd.style.display='block';
-turnInd.innerHTML='🎯 Раунд '+G.round+': ход <strong>'+currentPlayerName+'</strong>';
-}else{
-turnInd.style.display='none';
-}
+    function loginTeacher() {
+      const name = document.getElementById('teacherName').value.trim();
+      const pin = document.getElementById('teacherPin').value.trim();
+      if (!name || !pin) {
+        alert('Введите имя учителя и PIN');
+        return;
+      }
+      if (pin !== teacherCode) {
+        alert('Неверный PIN');
+        return;
+      }
+      setTeacherInfo();
+      renderJournal();
+      showScreen('teacherPanel');
+    }
 
-optGrid.innerHTML='';
-const letters=['А','Б','В','Г'];
-G.q.o.forEach((opt,i)=>{
-const btn=document.createElement('button');
-btn.className='option-btn';
-btn.innerHTML='<span class="opt-letter">'+letters[i]+'.</span> '+opt;
-btn.onclick=()=>handleAnswer(i,btn);
-optGrid.appendChild(btn);
-});
-}
+    function startBotGame(difficulty) {
+      const name = document.getElementById('studentName').value.trim() || 'Игрок';
+      const cls = document.getElementById('studentClass').value.trim() || '—';
+      const subject = document.getElementById('subjectSelect').value;
 
-function handleAnswer(optIdx,btn){
-if(!G.active)return;
+      gameState = {
+        mode: 'bot',
+        difficulty,
+        subject,
+        player1: name,
+        player2: 'Бот',
+        className: cls,
+        player1Score: 0,
+        player2Score: 0,
+        currentIndex: 0,
+        currentQuestion: null,
+        isLocked: false,
+        totalQuestions: 4
+      };
 
-const correctIdx=G.q.c;
-const allBtns=document.querySelectorAll('.option-btn');
+      startGameSession();
+      showScreen('gameScreen');
+    }
 
-if(G.mode==='bot'){
-// Режим с ботом: если неправильно — задержка 1 сек, потом снова
-allBtns.forEach(b=>b.disabled=true);
-if(optIdx===correctIdx){
-btn.classList.add('correct');
-showFeedback('✅ ВЕРНО!','correct');
-G.s1++;
-document.getElementById('player1Score').textContent=G.s1;
-setTimeout(()=>endRound(),1500);
-}else{
-btn.classList.add('wrong');
-showFeedback('❌ НЕВЕРНО! Попробуй ещё раз...','wrong');
-setTimeout(()=>{
-allBtns.forEach(b=>{
-b.disabled=false;
-b.classList.remove('wrong','correct');
-});
-document.getElementById('feedbackBox').innerHTML='';
-},1000);
-}
-}else{
-// Режим 2 игроков: один раунд — один игрок отвечает
-allBtns.forEach(b=>b.disabled=true);
-const currentPlayer=G.currentTurn===1?G.p1:G.p2;
+    function startDuelGame() {
+      const p1 = document.getElementById('player1Name').value.trim() || 'Игрок 1';
+      const p2 = document.getElementById('player2Name').value.trim() || 'Игрок 2';
+      const subject = document.getElementById('duelSubject').value;
 
-if(optIdx===correctIdx){
-btn.classList.add('correct');
-showFeedback('✅ '+currentPlayer.name+' отвечает ВЕРНО!','correct');
-if(G.currentTurn===1){
-G.s1++;
-document.getElementById('player1Score').textContent=G.s1;
-}else{
-G.s2++;
-document.getElementById('player2Score').textContent=G.s2;
-}
-setTimeout(()=>endRound(),1500);
-}else{
-btn.classList.add('wrong');
-showFeedback('❌ '+currentPlayer.name+' ответил неверно!','wrong');
-// Правильный ответ НЕ показываем, раунд заканчивается
-setTimeout(()=>endRound(),1500);
-}
-}
-}
+      gameState = {
+        mode: 'duel',
+        subject,
+        player1: p1,
+        player2: p2,
+        className: '—',
+        player1Score: 0,
+        player2Score: 0,
+        currentIndex: 0,
+        currentQuestion: null,
+        isLocked: false,
+        totalQuestions: 4
+      };
 
-function showFeedback(text,type){
-const fbBox=document.getElementById('feedbackBox');
-fbBox.innerHTML='<div class="feedback '+type+'">'+text+'</div>';
-}
+      startGameSession();
+      showScreen('gameScreen');
+    }
 
-function updT(){document.getElementById('timer').textContent='⏱ '+G.time+' с'}
+    function startGameSession() {
+      const qPool = QUESTION_BANK[gameState.subject] || QUESTION_BANK.math;
+      const max = qPool.length;
+      gameState.questions = [...qPool].slice(0, Math.min(max, gameState.totalQuestions));
+      gameState.currentIndex = 0;
+      renderScores();
+      renderQuestion();
+    }
 
-function endRound(){
-G.active=false;clearInterval(G.tmr);
-if(G.round>=G.total){endGame()}
-else{showScreen('roundEndScreen');setTimeout(()=>{G.round++;showScreen('gameScreen');startRound()},2000)}
-}
+    function renderScores() {
+      document.getElementById('player1Label').textContent = gameState.player1;
+      document.getElementById('player2Label').textContent = gameState.player2;
+      document.getElementById('player1Score').textContent = gameState.player1Score;
+      document.getElementById('player2Score').textContent = gameState.player2Score;
+    }
 
-function endGame(){
-let w='';
-if(G.s1>G.s2)w='🏆 Победа: '+G.p1.name+'!';
-else if(G.s2>G.s1)w='🏆 Победа: '+G.p2.name+'!';
-else w='🤝 Ничья!';
-document.getElementById('winner').textContent=w;
-document.getElementById('finalScore').textContent=G.p1.name+': '+G.s1+' — '+G.p2.name+': '+G.s2;
-sJ({date:new Date().toLocaleString('ru-RU'),p1:{...G.p1},p2:{...G.p2},mode:G.mode,subj:G.subj,diff:G.diff,s1:G.s1,s2:G.s2,winner:G.s1>G.s2?G.p1.name:G.s2>G.s1?G.p2.name:'Ничья'});
-showScreen('resultScreen');
-}
+    function renderQuestion() {
+      if (!gameState || gameState.currentIndex >= gameState.questions.length) {
+        finishGame();
+        return;
+      }
 
-function restartGame(){G.round=1;G.s1=0;G.s2=0;showScreen('gameScreen');startRound()}
+      clearInterval(timerId);
+      const q = gameState.questions[gameState.currentIndex];
+      gameState.currentQuestion = q;
+      gameState.isLocked = false;
 
-function updTA(){
-const t=lT(),sel=document.getElementById('teacherAccountSelect');sel.innerHTML='';
-const k=Object.keys(t);
-if(!k.length){sel.innerHTML='<option value="">Нет зарегистрированных учителей</option>';return}
-k.forEach(key=>{const o=document.createElement('option');o.value=key;o.textContent=t[key].fn+' '+t[key].ln+' — '+SN[t[key].subj];sel.appendChild(o)});
-}
+      const questionEl = document.getElementById('questionText');
+      questionEl.textContent = `${gameState.currentIndex + 1}. ${q.q}`;
 
-function registerTeacher(){
-const fn=document.getElementById('teacherFirstName').value.trim();
-const ln=document.getElementById('teacherLastName').value.trim();
-const subj=document.getElementById('teacherSubject').value;
-const pin=document.getElementById('newTeacherPin').value.trim();
-if(!fn||!ln||!pin){alert('Заполните все поля');return}
-if(!/^\d{4}$/.test(pin)){alert('PIN — 4 цифры');return}
-const t=lT(),key=fn+'_'+ln+'_'+subj+'_'+Date.now();
-t[key]={fn,ln,subj,pin};sT(t);
-alert('Регистрация успешна! Войдите.');
-document.getElementById('teacherFirstName').value='';
-document.getElementById('teacherLastName').value='';
-document.getElementById('newTeacherPin').value='';
-showScreen('teacherLogin');
-}
+      const optionsGrid = document.getElementById('optionsGrid');
+      optionsGrid.innerHTML = '';
+      q.options.forEach((option, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.type = 'button';
+        btn.textContent = `${String.fromCharCode(65 + idx)}. ${option}`;
+        btn.onclick = () => answerQuestion(idx);
+        optionsGrid.appendChild(btn);
+      });
 
-function teacherLogin(){
-const key=document.getElementById('teacherAccountSelect').value;
-const pin=document.getElementById('teacherPin').value.trim();
-if(!key){alert('Выберите аккаунт');return}
-const t=lT(),tc=t[key];
-if(!tc||tc.pin!==pin){alert('Неверный PIN');return}
-CT={key,...tc};
-document.getElementById('teacherPin').value='';
-document.getElementById('teacherInfo').innerHTML='<strong>👩‍🏫 '+tc.fn+' '+tc.ln+'</strong><br>Предмет: <span class="subject-badge">'+SN[tc.subj]+'</span>';
-showScreen('teacherJournal');
-}
+      document.getElementById('feedbackBox').className = 'feedback';
+      document.getElementById('feedbackBox').style.display = 'none';
+      document.getElementById('feedbackBox').textContent = '';
 
-function teacherLogout(){CT=null;showScreen('mainScreen')}
+      let seconds = 15;
+      document.getElementById('timer').textContent = seconds;
+      timerId = setInterval(() => {
+        seconds -= 1;
+        document.getElementById('timer').textContent = seconds;
+        if (seconds <= 0) {
+          clearInterval(timerId);
+          answerQuestion(-1, true);
+        }
+      }, 1000);
+    }
 
-function dJ(){
-if(!CT)return;
-const j=lJ().filter(e=>e.subj===CT.subj);
-rJE(j);
-}
+    function answerQuestion(index, timeout = false) {
+      if (!gameState || gameState.isLocked) return;
+      gameState.isLocked = true;
+      clearInterval(timerId);
 
-function rJE(entries){
-const c=document.getElementById('journalEntries');
-if(!entries.length){c.innerHTML='<div class="empty-journal">📭 Записей пока нет. Сыграйте первую дуэль!</div>';return}
-c.innerHTML=entries.slice().reverse().map(e=>'<div class="journal-entry"><div class="entry-header"><span>📅 '+e.date+'</span><span>🏆 '+e.winner+'</span></div><div class="entry-details">👤 <strong>'+e.p1.name+'</strong> ('+e.p1.cls+') <strong>'+e.s1+'</strong> : <strong>'+e.s2+'</strong> <strong>'+e.p2.name+'</strong> ('+e.p2.cls+')<br>Режим: '+(e.mode==='bot'?'🤖 Против бота':'👥 2 игрока')+' <span class="difficulty-badge '+e.diff+'">'+DN[e.diff]+'</span></div></div>').join('');
-}
+      const q = gameState.currentQuestion;
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.correct) btn.classList.add('correct');
+        if (index === i && i !== q.correct) btn.classList.add('wrong');
+      });
 
-function filterJournal(){
-if(!CT)return;
-const q=document.getElementById('searchJournal').value.toLowerCase().trim();
-const j=lJ().filter(e=>e.subj===CT.subj);
-let f=j;
-if(q)f=j.filter(e=>e.p1.name.toLowerCase().includes(q)||e.p1.cls.toLowerCase().includes(q)||e.p2.name.toLowerCase().includes(q)||e.p2.cls.toLowerCase().includes(q));
-rJE(f);
-}
+      const feedback = document.getElementById('feedbackBox');
+      if (timeout) {
+        feedback.textContent = '⏰ Время вышло!';
+        feedback.className = 'feedback wrong';
+        feedback.style.display = 'block';
+      } else if (index === q.correct) {
+        feedback.textContent = '✅ Верно!';
+        feedback.className = 'feedback correct';
+        feedback.style.display = 'block';
+        if (gameState.player1 === 'Бот' || gameState.mode === 'duel') {
+          // not used
+        }
+        if (gameState.mode === 'bot') {
+          gameState.player1Score += 1;
+        } else {
+          // duel mode: assign to current turn for player 1 or player 2 by parity
+          if (gameState.currentIndex % 2 === 0) {
+            gameState.player1Score += 1;
+          } else {
+            gameState.player2Score += 1;
+          }
+        }
+      } else {
+        feedback.textContent = '❌ Неверно!';
+        feedback.className = 'feedback wrong';
+        feedback.style.display = 'block';
+        if (gameState.mode === 'duel' && gameState.currentIndex % 2 !== 0) {
+          gameState.player1Score += 0;
+        }
+      }
 
-function clearJournal(){
-if(!CT)return;
-if(!confirm('Удалить все записи вашего предмета?'))return;
-const j=lJ().filter(e=>e.subj!==CT.subj);
-localStorage.setItem('dJ',JSON.stringify(j));dJ();
-}
+      renderScores();
+      setTimeout(() => {
+        gameState.currentIndex += 1;
+        renderQuestion();
+      }, 1000);
+    }
 
-function changePin(){
-if(!CT)return;
-const np=prompt('Новый PIN (4 цифры):');
-if(!np||!/\d{4}/.test(np)){alert('PIN — 4 цифры');return}
-const t=lT();t[CT.key].pin=np;sT(t);CT.pin=np;alert('PIN изменён!');
-}
+    function finishGame() {
+      clearInterval(timerId);
+      const p1 = gameState.player1Score;
+      const p2 = gameState.player2Score;
+      let winner = 'Ничья';
+      if (p1 > p2) winner = gameState.player1;
+      else if (p2 > p1) winner = gameState.player2;
 
-function downloadCSV(){
-if(!CT)return;
-const j=lJ().filter(e=>e.subj===CT.subj);
-if(!j.length){alert('Нет записей');return}
-let csv='Дата;Игрок 1;Класс 1;Игрок 2;Класс 2;Режим;Сложность;Счёт 1;Счёт 2;Победитель\n';
-j.forEach(e=>{csv+=e.date+';'+e.p1.name+';'+e.p1.cls+';'+e.p2.name+';'+e.p2.cls+';'+e.mode+';'+e.diff+';'+e.s1+';'+e.s2+';'+e.winner+'\n'});
-const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-const u=URL.createObjectURL(b),a=document.createElement('a');
-a.href=u;a.download='journal_'+CT.subj+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(u);
-}
-</script>
+      document.getElementById('winnerText').textContent = winner;
+      document.getElementById('finalScoreText').textContent = `${gameState.player1}: ${p1} — ${gameState.player2}: ${p2}`;
+
+      const entry = {
+        student: gameState.player1,
+        className: gameState.className || '—',
+        subject: gameState.subject,
+        result: `${p1}:${p2} — ${winner}`,
+        mode: gameState.mode
+      };
+
+      saveJournalEntry(entry);
+      renderJournal();
+      showScreen('resultScreen');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initFirebase();
+      renderJournal();
+      showScreen('mainScreen');
+    });
+  </script>
 </body>
 </html>
